@@ -1,10 +1,4 @@
 {
- HEAD
-  "name":"mrp-web",
-  "private":true,
-  "scripts":{"dev":"next dev"},
-  "dependencies":{"next":"14.2.5","react":"18.3.1","react-dom":"18.3.1"}
-=======
   "name": "mrp-web",
   "private": true,
   "scripts": {
@@ -20,5 +14,4 @@
     "@types/react": "19.2.7",
     "typescript": "5.9.3"
   }
- 7c700fe (v0.2: initial public release with web ui and api)
 }

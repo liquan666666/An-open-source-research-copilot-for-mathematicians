@@ -1,15 +1,20 @@
-HEAD
-export default function Home(){
-  return <h1>MathResearchPilot Web UI</h1>
-}
-=======
 export default function Home() {
   return (
     <div>
       <h1 style={{ marginTop: 0 }}>MathResearchPilot Web UI</h1>
-      <p>这是一个面向数学研究者的开源研究执行系统：推荐课题、检索论文、生成可执行路线，并监督每日完成情况。</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 16 }}>
+      <p>
+        这是一个面向数学研究者的开源研究执行系统：推荐课题、检索论文、生成可执行路线，并监督每日完成情况。
+      </p>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: 12,
+          marginTop: 16,
+        }}
+      >
         <Card title="课题推荐" desc="根据研究方向/偏好推荐可做课题" />
         <Card title="论文库" desc="检索论文并提供下载链接" />
         <Card title="路线图" desc="生成可执行研究路线（周/日粒度）" />
@@ -26,11 +31,17 @@ export default function Home() {
 
 function Card({ title, desc }: { title: string; desc: string }) {
   return (
-    <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 14 }}>
+    <div
+      style={{
+        border: "1px solid #eee",
+        borderRadius: 12,
+        padding: 14,
+      }}
+    >
       <div style={{ fontWeight: 700 }}>{title}</div>
       <div style={{ marginTop: 6, opacity: 0.85 }}>{desc}</div>
     </div>
   );
 }
 
-7c700fe (v0.2: initial public release with web ui and api)
+
