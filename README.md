@@ -55,3 +55,5 @@ However, real mathematical research often struggles with:
 git clone https://github.com/liquan666666/An-open-source-research-copilot-for-mathematicians.git
 cd An-open-source-research-copilot-for-mathematicians
 docker compose up --build
+Web UI: http://localhost:3000
+API Docs: http://localhost:8000/docs
