@@ -18,9 +18,19 @@ export default function Home() {
         }}
       >
         <Card
+          title="Dashboard"
+          desc="View statistics, progress charts, and research analytics"
+          link="/dashboard"
+        />
+        <Card
           title="Research Profile"
           desc="Set your MSC codes, keywords, and research preferences"
           link="/profile"
+        />
+        <Card
+          title="Topic Recommendations"
+          desc="Get personalized research topic suggestions based on your interests"
+          link="/topics"
         />
         <Card
           title="Paper Library"
@@ -28,7 +38,12 @@ export default function Home() {
           link="/papers"
         />
         <Card
-          title="Tasks"
+          title="Research Roadmap"
+          desc="Create multi-week research plans with milestones"
+          link="/roadmap"
+        />
+        <Card
+          title="Daily Tasks"
           desc="Generate and manage daily research tasks with check-ins"
           link="/tasks"
         />
@@ -38,10 +53,11 @@ export default function Home() {
         <h2 style={{ marginTop: 0 }}>Getting Started</h2>
         <ol style={{ lineHeight: '1.8' }}>
           <li>Set up your <Link href="/profile" style={{ color: '#0070f3' }}>Research Profile</Link> with MSC codes and keywords</li>
+          <li>Get <Link href="/topics" style={{ color: '#0070f3' }}>Topic Recommendations</Link> based on your research interests</li>
           <li>Search and add papers to your <Link href="/papers" style={{ color: '#0070f3' }}>Paper Library</Link></li>
-          <li>Mark focus papers and specify reading pages</li>
-          <li>Go to <Link href="/tasks" style={{ color: '#0070f3' }}>Tasks</Link> to generate today's research tasks</li>
-          <li>Work on tasks and check in your progress</li>
+          <li>Create a <Link href="/roadmap" style={{ color: '#0070f3' }}>Research Roadmap</Link> for your chosen topic</li>
+          <li>Go to <Link href="/tasks" style={{ color: '#0070f3' }}>Tasks</Link> to generate and manage daily tasks</li>
+          <li>Work on tasks and check in your progress regularly</li>
         </ol>
       </div>
 

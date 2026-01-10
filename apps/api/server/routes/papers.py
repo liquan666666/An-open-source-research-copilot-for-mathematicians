@@ -5,6 +5,8 @@ from typing import Optional
 import feedparser
 import requests
 import re
+import os
+from pathlib import Path
 
 from server.db.session import SessionLocal
 from server.db.models import Paper
@@ -180,13 +182,91 @@ def update_paper(paper_id: int, update: PaperUpdate, db: Session = Depends(get_d
     db.refresh(paper)
     return paper
 
+# POST /papers/{paper_id}/download - Download PDF for a paper
+@router.post('/{paper_id}/download')
+def download_paper_pdf(paper_id: int, db: Session = Depends(get_db)):
+    """Download PDF for a paper to local storage"""
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+
+    # Create pdfs directory if it doesn't exist
+    pdf_dir = Path('/app/data/pdfs')
+    pdf_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate filename
+    safe_id = paper.ext_id.replace('/', '_').replace('\\', '_')
+    pdf_filename = f"{safe_id}.pdf"
+    pdf_path = pdf_dir / pdf_filename
+
+    # Check if already downloaded
+    if pdf_path.exists():
+        paper.local_path = str(pdf_path)
+        db.commit()
+        return {"message": "PDF already exists", "path": str(pdf_path)}
+
+    # Download PDF
+    try:
+        response = requests.get(paper.pdf_url, timeout=60, stream=True)
+        response.raise_for_status()
+
+        # Save to file
+        with open(pdf_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        # Update paper record
+        paper.local_path = str(pdf_path)
+        db.commit()
+
+        return {"message": "PDF downloaded successfully", "path": str(pdf_path), "size_mb": round(pdf_path.stat().st_size / (1024 * 1024), 2)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to download PDF: {str(e)}")
+
+# GET /papers/storage/stats - Get storage statistics
+@router.get('/storage/stats')
+def get_storage_stats(db: Session = Depends(get_db)):
+    """Get PDF storage statistics"""
+    papers = db.query(Paper).all()
+
+    total_papers = len(papers)
+    downloaded_papers = sum(1 for p in papers if p.local_path)
+
+    # Calculate total size
+    total_size = 0
+    for paper in papers:
+        if paper.local_path:
+            try:
+                pdf_path = Path(paper.local_path)
+                if pdf_path.exists():
+                    total_size += pdf_path.stat().st_size
+            except Exception:
+                pass
+
+    return {
+        'total_papers': total_papers,
+        'downloaded_papers': downloaded_papers,
+        'pending_downloads': total_papers - downloaded_papers,
+        'total_size_mb': round(total_size / (1024 * 1024), 2),
+        'avg_size_mb': round(total_size / (1024 * 1024) / downloaded_papers, 2) if downloaded_papers > 0 else 0
+    }
+
 # DELETE /papers/{paper_id} - Remove a paper from library
 @router.delete('/{paper_id}')
-def delete_paper(paper_id: int, db: Session = Depends(get_db)):
+def delete_paper(paper_id: int, delete_pdf: bool = False, db: Session = Depends(get_db)):
     """Remove a paper from the library"""
     paper = db.query(Paper).filter(Paper.id == paper_id).first()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
+
+    # Delete PDF if requested and exists
+    if delete_pdf and paper.local_path:
+        try:
+            pdf_path = Path(paper.local_path)
+            if pdf_path.exists():
+                pdf_path.unlink()
+        except Exception:
+            pass  # Ignore errors in PDF deletion
 
     db.delete(paper)
     db.commit()

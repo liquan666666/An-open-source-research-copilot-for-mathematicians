@@ -76,3 +76,19 @@ export const checkinsApi = {
   create: (data: any) => apiCall('/checkins', { method: 'POST', body: JSON.stringify(data) }),
   delete: (id: number) => apiCall(`/checkins/${id}`, { method: 'DELETE' }),
 };
+
+// Topics API
+export const topicsApi = {
+  recommend: (data: any) => apiCall('/topics/recommend', { method: 'POST', body: JSON.stringify(data) }),
+  trending: (category?: string) => apiCall(`/topics/trending${category ? `?category=${category}` : ''}`),
+};
+
+// Roadmap API
+export const roadmapApi = {
+  getCurrent: () => apiCall('/roadmap/current'),
+  create: (data: any) => apiCall('/roadmap', { method: 'POST', body: JSON.stringify(data) }),
+  updateWeek: (weekNum: number, status: string) =>
+    apiCall(`/roadmap/week/${weekNum}?status=${status}`, { method: 'PATCH' }),
+  getProgress: () => apiCall('/roadmap/progress'),
+  delete: () => apiCall('/roadmap', { method: 'DELETE' }),
+};

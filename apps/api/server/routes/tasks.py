@@ -84,10 +84,59 @@ def get_today_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).filter(Task.date == today).all()
     return [TaskResponse.from_db(task) for task in tasks]
 
-# POST /tasks/today - Generate today's tasks
+# Helper function to analyze user history
+def analyze_user_history(db: Session):
+    """Analyze user's historical task completion patterns"""
+    # Get last 30 days of tasks
+    thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+    recent_tasks = db.query(Task).filter(Task.date >= thirty_days_ago).all()
+
+    if not recent_tasks:
+        return {
+            'avg_theory_ratio': 0.6,
+            'avg_completion_rate': 0.0,
+            'preferred_task_type': 'theory',
+            'avg_tasks_per_day': 2,
+            'patterns': []
+        }
+
+    # Calculate actual theory/computation ratio from history
+    theory_count = sum(1 for t in recent_tasks if t.kind == 'theory')
+    total_count = len(recent_tasks)
+    actual_theory_ratio = theory_count / total_count if total_count > 0 else 0.6
+
+    # Calculate completion rate
+    completed_count = sum(1 for t in recent_tasks if t.status == 'done')
+    completion_rate = completed_count / total_count if total_count > 0 else 0.0
+
+    # Find preferred task type based on completion
+    theory_completed = sum(1 for t in recent_tasks if t.kind == 'theory' and t.status == 'done')
+    comp_completed = sum(1 for t in recent_tasks if t.kind == 'computation' and t.status == 'done')
+    theory_total = sum(1 for t in recent_tasks if t.kind == 'theory')
+    comp_total = sum(1 for t in recent_tasks if t.kind == 'computation')
+
+    theory_success = theory_completed / theory_total if theory_total > 0 else 0
+    comp_success = comp_completed / comp_total if comp_total > 0 else 0
+
+    preferred_type = 'theory' if theory_success >= comp_success else 'computation'
+
+    # Calculate average tasks per day
+    unique_dates = set(t.date for t in recent_tasks)
+    avg_tasks_per_day = len(recent_tasks) / len(unique_dates) if unique_dates else 2
+
+    return {
+        'avg_theory_ratio': actual_theory_ratio,
+        'avg_completion_rate': completion_rate,
+        'preferred_task_type': preferred_type,
+        'avg_tasks_per_day': min(int(avg_tasks_per_day) + 1, 4),  # Cap at 4 tasks
+        'theory_success_rate': theory_success,
+        'comp_success_rate': comp_success
+    }
+
+# POST /tasks/today - Generate today's tasks with intelligent recommendations
 @router.post('/today', response_model=list[TaskResponse])
 def generate_today_tasks(db: Session = Depends(get_db)):
-    """Generate tasks for today based on roadmap and profile"""
+    """Generate intelligent tasks for today based on history, roadmap, and profile"""
     today = date.today().isoformat()
 
     # Check if today's tasks already exist
@@ -95,48 +144,98 @@ def generate_today_tasks(db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Today's tasks already exist. Use DELETE /tasks/today to reset.")
 
-    # Get profile to determine theory/computation ratio
+    # Analyze user history for intelligent recommendations
+    history = analyze_user_history(db)
+
+    # Get profile
     profile = db.query(Profile).first()
-    theory_ratio = 0.6  # default
+    target_theory_ratio = 0.6  # default
     if profile:
         profile_data = json.loads(profile.json)
-        theory_ratio = profile_data.get('theory_ratio', 0.6)
+        target_theory_ratio = profile_data.get('theory_ratio', 0.6)
 
-    # Get focus papers for context
+    # Adjust ratio based on historical performance
+    # If user consistently completes one type better, suggest slightly more of that type
+    adjusted_ratio = target_theory_ratio
+    if history['theory_success_rate'] > history['comp_success_rate'] + 0.2:
+        adjusted_ratio = min(target_theory_ratio + 0.1, 1.0)
+    elif history['comp_success_rate'] > history['theory_success_rate'] + 0.2:
+        adjusted_ratio = max(target_theory_ratio - 0.1, 0.0)
+
+    # Get focus papers
     focus_papers = db.query(Paper).filter(Paper.focus == True).all()
 
-    # Get roadmap for task suggestions
+    # Get roadmap and find current week's goals
     roadmap = db.query(Roadmap).first()
-    roadmap_data = {}
+    current_week_goals = []
     if roadmap:
         roadmap_data = json.loads(roadmap.json)
+        # Find current week based on start date
+        start_date_obj = datetime.fromisoformat(roadmap_data['start_date'])
+        days_since_start = (datetime.now().date() - start_date_obj.date()).days
+        current_week = (days_since_start // 7) + 1
 
-    # Generate tasks (simple implementation - can be enhanced with AI)
+        for week_plan in roadmap_data.get('weekly_plans', []):
+            if week_plan['week'] == current_week:
+                current_week_goals = week_plan.get('goals', [])
+                break
+
+    # Generate tasks based on history and roadmap
     tasks_to_create = []
+    num_tasks = history['avg_tasks_per_day']
 
-    # Theory task
-    if theory_ratio > 0:
-        theory_task = {
-            'title': 'Read and analyze focus papers',
-            'kind': 'theory',
-            'details': {
-                'description': 'Review focus papers and take notes on key concepts',
-                'papers': [{'id': p.id, 'title': p.title, 'pages': p.focus_pages} for p in focus_papers],
-                'dod': ['Read specified pages', 'Take structured notes', 'Identify key theorems or concepts']
+    # Calculate how many theory vs computation tasks
+    num_theory_tasks = round(num_tasks * adjusted_ratio)
+    num_comp_tasks = num_tasks - num_theory_tasks
+
+    # Generate theory tasks
+    for i in range(num_theory_tasks):
+        if i == 0 and focus_papers:
+            # Primary theory task: focus papers
+            theory_task = {
+                'title': 'Read and analyze focus papers',
+                'kind': 'theory',
+                'details': {
+                    'description': 'Review focus papers and take notes on key concepts',
+                    'papers': [{'id': p.id, 'title': p.title, 'pages': p.focus_pages} for p in focus_papers[:2]],
+                    'dod': ['Read specified pages', 'Take structured notes', 'Identify key theorems or concepts'],
+                    'roadmap_goals': current_week_goals[:2] if current_week_goals else []
+                }
             }
-        }
+        else:
+            # Secondary theory tasks based on roadmap
+            theory_task = {
+                'title': current_week_goals[i] if i < len(current_week_goals) else 'Review theoretical concepts',
+                'kind': 'theory',
+                'details': {
+                    'description': 'Study theoretical aspects of your research topic',
+                    'dod': ['Review key definitions', 'Work through examples', 'Connect to research question'],
+                    'roadmap_goals': [current_week_goals[i]] if i < len(current_week_goals) else []
+                }
+            }
         tasks_to_create.append(theory_task)
 
-    # Computation task
-    if theory_ratio < 1.0:
-        comp_task = {
-            'title': 'Work on computational experiments',
-            'kind': 'computation',
-            'details': {
-                'description': 'Implement or run computational experiments related to research',
-                'dod': ['Set up experiment', 'Run computations', 'Document results']
+    # Generate computation tasks
+    for i in range(num_comp_tasks):
+        if i == 0:
+            comp_task = {
+                'title': 'Work on computational experiments',
+                'kind': 'computation',
+                'details': {
+                    'description': 'Implement or run computational experiments related to research',
+                    'dod': ['Set up experiment environment', 'Run computations', 'Document results'],
+                    'roadmap_goals': [g for g in current_week_goals if 'computation' in g.lower() or 'implement' in g.lower()][:2]
+                }
             }
-        }
+        else:
+            comp_task = {
+                'title': 'Code review and testing',
+                'kind': 'computation',
+                'details': {
+                    'description': 'Review and test existing computational code',
+                    'dod': ['Review code quality', 'Run test cases', 'Document edge cases']
+                }
+            }
         tasks_to_create.append(comp_task)
 
     # Create tasks in database
