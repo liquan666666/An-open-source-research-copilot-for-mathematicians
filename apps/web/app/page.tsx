@@ -1,46 +1,82 @@
+import Link from 'next/link';
+
 export default function Home() {
   return (
-    <div>
-      <h1 style={{ marginTop: 0 }}>MathResearchPilot Web UI</h1>
+    <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
+      <h1 style={{ marginTop: 0 }}>MathResearchPilot</h1>
 
-      <p>
-        这是一个面向数学研究者的开源研究执行系统：推荐课题、检索论文、生成可执行路线，并监督每日完成情况。
+      <p style={{ fontSize: '16px', lineHeight: '1.6' }}>
+        An open-source research execution system for mathematicians. Turn vague research ideas into executable, supervised, and explainable daily research tasks.
       </p>
 
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 12,
-          marginTop: 16,
+          gap: 16,
+          marginTop: 32,
         }}
       >
-        <Card title="课题推荐" desc="根据研究方向/偏好推荐可做课题" />
-        <Card title="论文库" desc="检索论文并提供下载链接" />
-        <Card title="路线图" desc="生成可执行研究路线（周/日粒度）" />
-        <Card title="今日任务" desc="为今天分配任务并追踪" />
-        <Card title="打卡监督" desc="每日提交完成情况与障碍" />
+        <Card
+          title="Research Profile"
+          desc="Set your MSC codes, keywords, and research preferences"
+          link="/profile"
+        />
+        <Card
+          title="Paper Library"
+          desc="Search arXiv, add papers, and mark focus papers for reading"
+          link="/papers"
+        />
+        <Card
+          title="Tasks"
+          desc="Generate and manage daily research tasks with check-ins"
+          link="/tasks"
+        />
       </div>
 
-      <p style={{ marginTop: 18, opacity: 0.8 }}>
-        提示：先去“课题推荐”，确定一个课题，再去“路线图 / 今日任务”生成执行计划。
-      </p>
+      <div style={{ marginTop: 32, padding: '20px', background: '#f5f5f5', borderRadius: '8px' }}>
+        <h2 style={{ marginTop: 0 }}>Getting Started</h2>
+        <ol style={{ lineHeight: '1.8' }}>
+          <li>Set up your <Link href="/profile" style={{ color: '#0070f3' }}>Research Profile</Link> with MSC codes and keywords</li>
+          <li>Search and add papers to your <Link href="/papers" style={{ color: '#0070f3' }}>Paper Library</Link></li>
+          <li>Mark focus papers and specify reading pages</li>
+          <li>Go to <Link href="/tasks" style={{ color: '#0070f3' }}>Tasks</Link> to generate today's research tasks</li>
+          <li>Work on tasks and check in your progress</li>
+        </ol>
+      </div>
+
+      <div style={{ marginTop: 32, fontSize: '14px', color: '#666', textAlign: 'center' }}>
+        <p>API Documentation: <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" style={{ color: '#0070f3' }}>http://localhost:8000/docs</a></p>
+      </div>
     </div>
   );
 }
 
-function Card({ title, desc }: { title: string; desc: string }) {
+function Card({ title, desc, link }: { title: string; desc: string; link: string }) {
   return (
-    <div
-      style={{
-        border: "1px solid #eee",
-        borderRadius: 12,
-        padding: 14,
-      }}
-    >
-      <div style={{ fontWeight: 700 }}>{title}</div>
-      <div style={{ marginTop: 6, opacity: 0.85 }}>{desc}</div>
-    </div>
+    <Link href={link} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <div
+        style={{
+          border: "2px solid #eee",
+          borderRadius: 12,
+          padding: 20,
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          height: '100%',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.borderColor = '#0070f3';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.borderColor = '#eee';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        <div style={{ fontWeight: 700, fontSize: '18px', marginBottom: '8px' }}>{title}</div>
+        <div style={{ opacity: 0.7, lineHeight: '1.5' }}>{desc}</div>
+      </div>
+    </Link>
   );
 }
 
