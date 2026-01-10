@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from server.routes import profile, topics, papers, roadmap, tasks, checkins
+from server.routes import profile, topics, papers, roadmap, tasks, checkins, stats
 from server.db.init_db import init_db
 from server.settings import settings
 
@@ -23,3 +23,4 @@ app.include_router(papers.router)
 app.include_router(roadmap.router)
 app.include_router(tasks.router)
 app.include_router(checkins.router)
+app.include_router(stats.router)
