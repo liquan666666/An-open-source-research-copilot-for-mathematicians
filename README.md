@@ -49,11 +49,36 @@ However, real mathematical research often struggles with:
 
 ---
 
-## Quick Start (Docker)
+## Quick Start
+
+### Option 1: Docker (Recommended)
 
 ```bash
 git clone https://github.com/liquan666666/An-open-source-research-copilot-for-mathematicians.git
 cd An-open-source-research-copilot-for-mathematicians
 docker compose up --build
-Web UI: http://localhost:3000
-API Docs: http://localhost:8000/docs
+```
+
+### Option 2: Local Setup (Without Docker)
+
+**Requirements:**
+- Node.js 18+
+- Python 3.11+
+- pip
+
+**Steps:**
+```bash
+git clone https://github.com/liquan666666/An-open-source-research-copilot-for-mathematicians.git
+cd An-open-source-research-copilot-for-mathematicians
+
+# Install dependencies
+cd apps/web && npm install && cd ../..
+pip install --user fastapi uvicorn sqlalchemy pydantic requests
+
+# Start services
+./start-local.sh
+```
+
+**Access the application:**
+- Web UI: http://localhost:3000
+- API Docs: http://localhost:8000/docs
