@@ -3,15 +3,27 @@ from sqlalchemy.orm import Session
 from server.db.session import get_db
 from server.db.models import Paper
 from server.schemas import PaperSearch, PaperCreate, PaperUpdate, PaperResponse
-import feedparser
 import re
 from typing import List
+
+# Try to import feedparser, but make it optional
+try:
+    import feedparser
+    FEEDPARSER_AVAILABLE = True
+except ImportError:
+    FEEDPARSER_AVAILABLE = False
 
 router = APIRouter(prefix='/papers', tags=['papers'])
 
 
 def search_arxiv(query: str, max_results: int = 10) -> List[dict]:
     """Search arXiv for papers matching the query"""
+    if not FEEDPARSER_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="arXiv search is currently unavailable. The 'feedparser' library is not installed."
+        )
+
     # Construct arXiv API query
     base_url = "http://export.arxiv.org/api/query?"
     search_query = f"search_query=all:{query}&start=0&max_results={max_results}&sortBy=relevance&sortOrder=descending"
