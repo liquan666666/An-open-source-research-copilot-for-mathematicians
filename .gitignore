@@ -22,6 +22,11 @@ __pycache__/
 venv/
 .venv/
 
+# Database
+apps/api/data/
+*.sqlite
+*.sqlite-journal
+
 # Editor
 .vscode/
 .idea/
