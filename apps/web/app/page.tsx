@@ -1,46 +1,258 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 export default function Home() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring" as const,
+        stiffness: 100,
+        damping: 15,
+      },
+    },
+  };
+
+  const cards = [
+    {
+      title: "课题推荐",
+      desc: "根据研究方向/偏好推荐可做课题",
+      icon: "🎯",
+      color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    },
+    {
+      title: "论文库",
+      desc: "检索论文并提供下载链接",
+      icon: "📚",
+      color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    },
+    {
+      title: "路线图",
+      desc: "生成可执行研究路线（周/日粒度）",
+      icon: "🗺️",
+      color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    },
+    {
+      title: "今日任务",
+      desc: "为今天分配任务并追踪",
+      icon: "✅",
+      color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    },
+    {
+      title: "打卡监督",
+      desc: "每日提交完成情况与障碍",
+      icon: "📊",
+      color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+    },
+  ];
+
   return (
-    <div>
-      <h1 style={{ marginTop: 0 }}>MathResearchPilot Web UI</h1>
-
-      <p>
-        这是一个面向数学研究者的开源研究执行系统：推荐课题、检索论文、生成可执行路线，并监督每日完成情况。
-      </p>
-
-      <div
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.div
+        variants={itemVariants}
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 12,
-          marginTop: 16,
+          textAlign: "center",
+          marginBottom: "48px",
         }}
       >
-        <Card title="课题推荐" desc="根据研究方向/偏好推荐可做课题" />
-        <Card title="论文库" desc="检索论文并提供下载链接" />
-        <Card title="路线图" desc="生成可执行研究路线（周/日粒度）" />
-        <Card title="今日任务" desc="为今天分配任务并追踪" />
-        <Card title="打卡监督" desc="每日提交完成情况与障碍" />
-      </div>
+        <h1
+          style={{
+            fontSize: "3.5rem",
+            fontWeight: "800",
+            background: "linear-gradient(135deg, #fff 0%, #f0f0f0 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            marginBottom: "16px",
+            textShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          MathResearchPilot
+        </h1>
+        <p
+          style={{
+            fontSize: "1.2rem",
+            color: "#ffffff",
+            maxWidth: "700px",
+            margin: "0 auto",
+            lineHeight: "1.8",
+            textShadow: "0 1px 3px rgba(0,0,0,0.2)",
+          }}
+        >
+          面向数学研究者的开源研究执行系统
+          <br />
+          推荐课题 · 检索论文 · 生成路线 · 监督完成
+        </p>
+      </motion.div>
 
-      <p style={{ marginTop: 18, opacity: 0.8 }}>
-        提示：先去“课题推荐”，确定一个课题，再去“路线图 / 今日任务”生成执行计划。
-      </p>
-    </div>
+      <motion.div
+        variants={containerVariants}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "24px",
+          marginTop: "40px",
+        }}
+      >
+        {cards.map((card, index) => (
+          <Card key={index} {...card} />
+        ))}
+      </motion.div>
+
+      <motion.div
+        variants={itemVariants}
+        style={{
+          marginTop: "48px",
+          padding: "24px",
+          background: "rgba(255, 255, 255, 0.95)",
+          borderRadius: "16px",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255, 255, 255, 0.3)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+          <span style={{ fontSize: "1.5rem" }}>💡</span>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "1rem",
+              color: "#4a5568",
+              lineHeight: "1.6",
+            }}
+          >
+            <strong style={{ color: "#2d3748" }}>快速开始：</strong>
+            先访问「课题推荐」确定研究方向，然后前往「路线图」生成详细的执行计划，最后通过「今日任务」和「打卡监督」追踪研究进度。
+          </p>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
-function Card({ title, desc }: { title: string; desc: string }) {
+function Card({
+  title,
+  desc,
+  icon,
+  color,
+}: {
+  title: string;
+  desc: string;
+  icon: string;
+  color: string;
+}) {
   return (
-    <div
+    <motion.div
+      variants={{
+        hidden: { opacity: 0, scale: 0.8 },
+        visible: {
+          opacity: 1,
+          scale: 1,
+          transition: {
+            type: "spring",
+            stiffness: 100,
+            damping: 15,
+          },
+        },
+      }}
+      whileHover={{
+        scale: 1.05,
+        y: -8,
+        transition: { type: "spring", stiffness: 300, damping: 20 },
+      }}
+      whileTap={{ scale: 0.98 }}
       style={{
-        border: "1px solid #eee",
-        borderRadius: 12,
-        padding: 14,
+        background: "rgba(255, 255, 255, 0.95)",
+        borderRadius: "20px",
+        padding: "28px",
+        cursor: "pointer",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+        backdropFilter: "blur(10px)",
+        border: "1px solid rgba(255, 255, 255, 0.3)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <div style={{ fontWeight: 700 }}>{title}</div>
-      <div style={{ marginTop: 6, opacity: 0.85 }}>{desc}</div>
-    </div>
+      <motion.div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "5px",
+          background: color,
+        }}
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+      />
+      <div
+        style={{
+          fontSize: "3rem",
+          marginBottom: "16px",
+          textAlign: "center",
+        }}
+      >
+        <motion.span
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 200,
+            damping: 15,
+            delay: 0.4,
+          }}
+          style={{ display: "inline-block" }}
+        >
+          {icon}
+        </motion.span>
+      </div>
+      <div
+        style={{
+          fontWeight: "700",
+          fontSize: "1.4rem",
+          marginBottom: "12px",
+          color: "#2d3748",
+          textAlign: "center",
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          fontSize: "0.95rem",
+          color: "#718096",
+          lineHeight: "1.6",
+          textAlign: "center",
+        }}
+      >
+        {desc}
+      </div>
+    </motion.div>
   );
 }
 
