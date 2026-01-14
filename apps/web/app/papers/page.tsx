@@ -15,6 +15,8 @@ interface Paper {
   pdf_url: string;
   focus?: boolean;
   source?: string;
+  citation_count?: number;
+  influential_citation_count?: number;
 }
 
 export default function PapersPage() {
@@ -24,6 +26,7 @@ export default function PapersPage() {
   const [searching, setSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<"library" | "search">("library");
   const [searchSource, setSearchSource] = useState<"all" | "arxiv" | "semantic">("all");
+  const [sortBy, setSortBy] = useState<"relevance" | "citations" | "year">("citations");
 
   useEffect(() => {
     loadMyPapers();
@@ -40,7 +43,7 @@ export default function PapersPage() {
     setSearching(true);
     try {
       const res = await fetch(
-        `${API_BASE}/papers/search?q=${encodeURIComponent(searchQuery)}&source=${searchSource}&max_results=15`
+        `${API_BASE}/papers/search?q=${encodeURIComponent(searchQuery)}&source=${searchSource}&max_results=15&sort_by=${sortBy}`
       );
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -183,22 +186,41 @@ export default function PapersPage() {
 
       {activeTab === "search" && (
         <div style={{ marginTop: 20 }}>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ marginRight: 8, fontWeight: 600 }}>数据源：</label>
-            <select
-              value={searchSource}
-              onChange={(e) => setSearchSource(e.target.value as any)}
-              style={{
-                padding: "6px 12px",
-                borderRadius: 4,
-                border: "1px solid #ddd",
-                fontSize: 14,
-              }}
-            >
-              <option value="all">全部来源（arXiv + Semantic Scholar）</option>
-              <option value="arxiv">仅 arXiv</option>
-              <option value="semantic">仅 Semantic Scholar（包含 SCI、中国论文等）</option>
-            </select>
+          <div style={{ marginBottom: 12, display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <div>
+              <label style={{ marginRight: 8, fontWeight: 600 }}>数据源：</label>
+              <select
+                value={searchSource}
+                onChange={(e) => setSearchSource(e.target.value as any)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 4,
+                  border: "1px solid #ddd",
+                  fontSize: 14,
+                }}
+              >
+                <option value="all">全部来源（arXiv + Semantic Scholar）</option>
+                <option value="arxiv">仅 arXiv</option>
+                <option value="semantic">仅 Semantic Scholar（包含 SCI、中国论文等）</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ marginRight: 8, fontWeight: 600 }}>排序：</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 4,
+                  border: "1px solid #ddd",
+                  fontSize: 14,
+                }}
+              >
+                <option value="citations">按引用数（影响力）</option>
+                <option value="year">按年份（最新）</option>
+                <option value="relevance">按相关性</option>
+              </select>
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
@@ -233,7 +255,9 @@ export default function PapersPage() {
             </button>
           </div>
           <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>
-            💡 提示：支持中文搜索（如"代数几何"、"偏微分方程"等），系统会自动翻译为英文。Semantic Scholar 包含 SCI 期刊、中国期刊等更广泛的论文来源。
+            💡 提示：支持中文搜索（如"代数几何"、"偏微分方程"等），系统会自动翻译为英文。
+            <br />
+            📊 默认按<strong>引用数排序</strong>，帮你找到最有影响力的论文。Semantic Scholar 数据源显示引用数和重要引用数。
           </div>
 
           {searchResults.length > 0 && (
@@ -269,6 +293,14 @@ export default function PapersPage() {
                   </div>
                   <div style={{ marginTop: 8, fontSize: 14, opacity: 0.8 }}>
                     {paper.authors} ({paper.year})
+                    {paper.citation_count !== undefined && paper.citation_count > 0 && (
+                      <span style={{ marginLeft: 12, color: "#0070f3" }}>
+                        📊 引用: {paper.citation_count}
+                        {paper.influential_citation_count !== undefined && paper.influential_citation_count > 0 && (
+                          <span style={{ opacity: 0.8 }}> ({paper.influential_citation_count} 重要引用)</span>
+                        )}
+                      </span>
+                    )}
                   </div>
                   <div style={{ marginTop: 12, display: "flex", gap: 12 }}>
                     <a href={paper.arxiv_url} target="_blank" style={{ color: "#0070f3" }}>

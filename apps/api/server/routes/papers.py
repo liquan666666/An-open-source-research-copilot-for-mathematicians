@@ -174,7 +174,8 @@ def search_semantic_scholar_api(query: str, max_results: int = 10):
     try:
         import json
         encoded_query = urllib.parse.quote(query)
-        url = f'https://api.semanticscholar.org/graph/v1/paper/search?query={encoded_query}&limit={max_results}&fields=paperId,title,authors,year,venue,externalIds,openAccessPdf'
+        # 添加 citationCount 和 influentialCitationCount 字段
+        url = f'https://api.semanticscholar.org/graph/v1/paper/search?query={encoded_query}&limit={max_results}&fields=paperId,title,authors,year,venue,externalIds,openAccessPdf,citationCount,influentialCitationCount'
 
         req = urllib.request.Request(url, headers={'User-Agent': 'MathResearchPilot/1.0'})
         with urllib.request.urlopen(req, timeout=10) as response:
@@ -191,6 +192,8 @@ def search_semantic_scholar_api(query: str, max_results: int = 10):
 
                 year = paper.get('year', 2024)
                 venue = paper.get('venue', '')
+                citation_count = paper.get('citationCount', 0)
+                influential_citation_count = paper.get('influentialCitationCount', 0)
 
                 # 构建链接
                 s2_url = f"https://www.semanticscholar.org/paper/{paper_id}"
@@ -220,7 +223,9 @@ def search_semantic_scholar_api(query: str, max_results: int = 10):
                     "year": year if year else 2024,
                     "arxiv_url": main_url,
                     "pdf_url": pdf_url if pdf_url else main_url,
-                    "source": f"Semantic Scholar{' ('+venue+')' if venue else ''}"
+                    "source": f"Semantic Scholar{' ('+venue+')' if venue else ''}",
+                    "citation_count": citation_count,
+                    "influential_citation_count": influential_citation_count
                 })
             except Exception:
                 continue
@@ -234,9 +239,10 @@ def search_semantic_scholar_api(query: str, max_results: int = 10):
 def search_papers(
     q: str = Query(..., description="搜索关键词"),
     max_results: int = 10,
-    source: str = Query("all", description="数据源: arxiv, semantic, all")
+    source: str = Query("all", description="数据源: arxiv, semantic, all"),
+    sort_by: str = Query("relevance", description="排序方式: relevance, citations, year")
 ):
-    """搜索论文（支持多数据源）"""
+    """搜索论文（支持多数据源和排序）"""
     try:
         # 翻译中文关键词为英文
         translated_q = translate_chinese_keywords(q)
@@ -246,6 +252,10 @@ def search_papers(
         # 根据选择的数据源搜索
         if source in ["arxiv", "all"]:
             arxiv_results = search_arxiv_api(translated_q, max_results)
+            # 为 arXiv 论文添加默认引用数（无法获取）
+            for paper in arxiv_results:
+                paper['citation_count'] = 0
+                paper['influential_citation_count'] = 0
             results.extend(arxiv_results)
 
         if source in ["semantic", "all"]:
@@ -260,6 +270,15 @@ def search_papers(
             if title_lower not in seen_titles:
                 seen_titles.add(title_lower)
                 unique_results.append(paper)
+
+        # 排序
+        if sort_by == "citations":
+            # 按引用数降序排序
+            unique_results.sort(key=lambda x: x.get('citation_count', 0), reverse=True)
+        elif sort_by == "year":
+            # 按年份降序排序（最新的在前）
+            unique_results.sort(key=lambda x: x.get('year', 0), reverse=True)
+        # relevance 保持原始搜索结果顺序
 
         return unique_results[:max_results * 2]  # 返回更多结果
     except Exception as e:
