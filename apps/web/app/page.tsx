@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function Home() {
   const containerVariants = {
@@ -33,30 +34,35 @@ export default function Home() {
       desc: "根据研究方向/偏好推荐可做课题",
       icon: "🎯",
       color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      href: "/topics",
     },
     {
       title: "论文库",
       desc: "检索论文并提供下载链接",
       icon: "📚",
       color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      href: "/papers",
     },
     {
       title: "路线图",
       desc: "生成可执行研究路线（周/日粒度）",
       icon: "🗺️",
       color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      href: "/roadmap",
     },
     {
       title: "今日任务",
       desc: "为今天分配任务并追踪",
       icon: "✅",
       color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      href: "/tasks",
     },
     {
       title: "打卡监督",
       desc: "每日提交完成情况与障碍",
       icon: "📊",
       color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      href: "/checkin",
     },
   ];
 
@@ -159,14 +165,17 @@ function Card({
   desc,
   icon,
   color,
+  href,
 }: {
   title: string;
   desc: string;
   icon: string;
   color: string;
+  href: string;
 }) {
   return (
-    <motion.div
+    <Link href={href} style={{ textDecoration: "none", display: "block" }}>
+      <motion.div
       variants={{
         hidden: { opacity: 0, scale: 0.8 },
         visible: {
@@ -253,6 +262,7 @@ function Card({
         {desc}
       </div>
     </motion.div>
+    </Link>
   );
 }
 
