@@ -44,6 +44,13 @@ export default function Home() {
       href: "/papers",
     },
     {
+      title: "论文阅读助手",
+      desc: "智能提取论文知识点，辅助文献阅读",
+      icon: "🤖",
+      color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      href: "/paper-assistant",
+    },
+    {
       title: "路线图",
       desc: "生成可执行研究路线（周/日粒度）",
       icon: "🗺️",
@@ -61,7 +68,7 @@ export default function Home() {
       title: "打卡监督",
       desc: "每日提交完成情况与障碍",
       icon: "📊",
-      color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      color: "linear-gradient(135deg, #764ba2 0%, #667eea 100%)",
       href: "/checkin",
     },
   ];
@@ -152,7 +159,7 @@ export default function Home() {
             }}
           >
             <strong style={{ color: "#2d3748" }}>快速开始：</strong>
-            先访问「课题推荐」确定研究方向，然后前往「路线图」生成详细的执行计划，最后通过「今日任务」和「打卡监督」追踪研究进度。
+            先访问「课题推荐」确定研究方向，使用「论文阅读助手」高效阅读文献并提取知识点，然后前往「路线图」生成详细的执行计划，最后通过「今日任务」和「打卡监督」追踪研究进度。
           </p>
         </div>
       </motion.div>
