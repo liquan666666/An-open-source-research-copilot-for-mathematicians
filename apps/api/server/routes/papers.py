@@ -117,17 +117,12 @@ def get_papers(db: Session = Depends(get_db)):
         "focus": p.focus
     } for p in papers]
 
-@router.get('/search')
-def search_arxiv(q: str = Query(..., description="搜索关键词"), max_results: int = 10):
+def search_arxiv_api(query: str, max_results: int = 10):
     """搜索 arXiv 论文"""
     try:
-        # 翻译中文关键词为英文
-        translated_q = translate_chinese_keywords(q)
-        query = urllib.parse.quote(translated_q)
-        # 使用 HTTPS 而不是 HTTP
-        url = f'https://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}'
+        encoded_query = urllib.parse.quote(query)
+        url = f'https://export.arxiv.org/api/query?search_query=all:{encoded_query}&start=0&max_results={max_results}'
 
-        # 添加超时和请求头
         req = urllib.request.Request(url, headers={'User-Agent': 'MathResearchPilot/1.0'})
         with urllib.request.urlopen(req, timeout=10) as response:
             data = response.read().decode('utf-8')
@@ -158,21 +153,117 @@ def search_arxiv(q: str = Query(..., description="搜索关键词"), max_results
                 published = published_elem.text[:4] if published_elem is not None else "2024"
 
                 results.append({
-                    "ext_id": arxiv_id,
+                    "ext_id": f"arxiv:{arxiv_id}",
                     "title": title,
                     "authors": ", ".join(authors) if authors else "Unknown",
                     "year": int(published),
                     "arxiv_url": f"https://arxiv.org/abs/{arxiv_id}",
-                    "pdf_url": f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+                    "pdf_url": f"https://arxiv.org/pdf/{arxiv_id}.pdf",
+                    "source": "arXiv"
                 })
-            except Exception as entry_error:
-                # 跳过解析失败的条目
+            except Exception:
                 continue
 
         return results
     except Exception as e:
-        # 返回错误信息，但保持返回列表格式以便前端处理
         print(f"arXiv search error: {str(e)}")
+        return []
+
+def search_semantic_scholar_api(query: str, max_results: int = 10):
+    """搜索 Semantic Scholar（包含 SCI、中国论文等）"""
+    try:
+        import json
+        encoded_query = urllib.parse.quote(query)
+        url = f'https://api.semanticscholar.org/graph/v1/paper/search?query={encoded_query}&limit={max_results}&fields=paperId,title,authors,year,venue,externalIds,openAccessPdf'
+
+        req = urllib.request.Request(url, headers={'User-Agent': 'MathResearchPilot/1.0'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
+
+        results = []
+        for paper in data.get('data', []):
+            try:
+                paper_id = paper.get('paperId', '')
+                title = paper.get('title', 'Untitled')
+
+                authors_list = paper.get('authors', [])
+                authors = ", ".join([a.get('name', 'Unknown') for a in authors_list[:5]])
+
+                year = paper.get('year', 2024)
+                venue = paper.get('venue', '')
+
+                # 构建链接
+                s2_url = f"https://www.semanticscholar.org/paper/{paper_id}"
+
+                # 获取 PDF 链接
+                pdf_url = ""
+                open_access = paper.get('openAccessPdf')
+                if open_access and open_access.get('url'):
+                    pdf_url = open_access['url']
+
+                # 获取外部 ID
+                external_ids = paper.get('externalIds', {})
+                arxiv_id = external_ids.get('ArXiv', '')
+                doi = external_ids.get('DOI', '')
+
+                # 优先使用 arXiv 或 DOI 链接
+                main_url = s2_url
+                if arxiv_id:
+                    main_url = f"https://arxiv.org/abs/{arxiv_id}"
+                elif doi:
+                    main_url = f"https://doi.org/{doi}"
+
+                results.append({
+                    "ext_id": f"s2:{paper_id}",
+                    "title": title,
+                    "authors": authors if authors else "Unknown",
+                    "year": year if year else 2024,
+                    "arxiv_url": main_url,
+                    "pdf_url": pdf_url if pdf_url else main_url,
+                    "source": f"Semantic Scholar{' ('+venue+')' if venue else ''}"
+                })
+            except Exception:
+                continue
+
+        return results
+    except Exception as e:
+        print(f"Semantic Scholar search error: {str(e)}")
+        return []
+
+@router.get('/search')
+def search_papers(
+    q: str = Query(..., description="搜索关键词"),
+    max_results: int = 10,
+    source: str = Query("all", description="数据源: arxiv, semantic, all")
+):
+    """搜索论文（支持多数据源）"""
+    try:
+        # 翻译中文关键词为英文
+        translated_q = translate_chinese_keywords(q)
+
+        results = []
+
+        # 根据选择的数据源搜索
+        if source in ["arxiv", "all"]:
+            arxiv_results = search_arxiv_api(translated_q, max_results)
+            results.extend(arxiv_results)
+
+        if source in ["semantic", "all"]:
+            semantic_results = search_semantic_scholar_api(translated_q, max_results)
+            results.extend(semantic_results)
+
+        # 去重（基于标题相似度）
+        seen_titles = set()
+        unique_results = []
+        for paper in results:
+            title_lower = paper['title'].lower()
+            if title_lower not in seen_titles:
+                seen_titles.add(title_lower)
+                unique_results.append(paper)
+
+        return unique_results[:max_results * 2]  # 返回更多结果
+    except Exception as e:
+        print(f"Paper search error: {str(e)}")
         return []
 
 @router.post('')

@@ -14,6 +14,7 @@ interface Paper {
   arxiv_url: string;
   pdf_url: string;
   focus?: boolean;
+  source?: string;
 }
 
 export default function PapersPage() {
@@ -22,6 +23,7 @@ export default function PapersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<"library" | "search">("library");
+  const [searchSource, setSearchSource] = useState<"all" | "arxiv" | "semantic">("all");
 
   useEffect(() => {
     loadMyPapers();
@@ -37,14 +39,16 @@ export default function PapersPage() {
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
-      const res = await fetch(`${API_BASE}/papers/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(
+        `${API_BASE}/papers/search?q=${encodeURIComponent(searchQuery)}&source=${searchSource}&max_results=15`
+      );
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
       const data = await res.json();
       setSearchResults(Array.isArray(data) ? data : []);
       if (data.length === 0) {
-        alert("没有找到相关论文，请尝试其他关键词");
+        alert("没有找到相关论文，请尝试其他关键词或更换数据源");
       }
     } catch (error) {
       console.error("搜索出错:", error);
@@ -179,13 +183,31 @@ export default function PapersPage() {
 
       {activeTab === "search" && (
         <div style={{ marginTop: 20 }}>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ marginRight: 8, fontWeight: 600 }}>数据源：</label>
+            <select
+              value={searchSource}
+              onChange={(e) => setSearchSource(e.target.value as any)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 4,
+                border: "1px solid #ddd",
+                fontSize: 14,
+              }}
+            >
+              <option value="all">全部来源（arXiv + Semantic Scholar）</option>
+              <option value="arxiv">仅 arXiv</option>
+              <option value="semantic">仅 Semantic Scholar（包含 SCI、中国论文等）</option>
+            </select>
+          </div>
+
           <div style={{ display: "flex", gap: 8 }}>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && searchArxiv()}
-              placeholder="输入关键词搜索 arXiv 论文（支持中英文）..."
+              placeholder="输入关键词搜索论文（支持中英文）..."
               style={{
                 flex: 1,
                 padding: 12,
@@ -211,7 +233,7 @@ export default function PapersPage() {
             </button>
           </div>
           <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>
-            💡 提示：支持中文搜索（如"代数几何"、"偏微分方程"等），系统会自动翻译为英文搜索 arXiv
+            💡 提示：支持中文搜索（如"代数几何"、"偏微分方程"等），系统会自动翻译为英文。Semantic Scholar 包含 SCI 期刊、中国期刊等更广泛的论文来源。
           </div>
 
           {searchResults.length > 0 && (
@@ -227,17 +249,36 @@ export default function PapersPage() {
                     marginBottom: 12,
                   }}
                 >
-                  <h4 style={{ margin: 0 }}>{paper.title}</h4>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                    <h4 style={{ margin: 0, flex: 1 }}>{paper.title}</h4>
+                    {paper.source && (
+                      <span
+                        style={{
+                          marginLeft: 12,
+                          padding: "2px 8px",
+                          borderRadius: 12,
+                          backgroundColor: "#e0f0ff",
+                          fontSize: 12,
+                          color: "#0070f3",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {paper.source}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ marginTop: 8, fontSize: 14, opacity: 0.8 }}>
                     {paper.authors} ({paper.year})
                   </div>
                   <div style={{ marginTop: 12, display: "flex", gap: 12 }}>
                     <a href={paper.arxiv_url} target="_blank" style={{ color: "#0070f3" }}>
-                      arXiv
+                      查看论文
                     </a>
-                    <a href={paper.pdf_url} target="_blank" style={{ color: "#0070f3" }}>
-                      PDF
-                    </a>
+                    {paper.pdf_url && paper.pdf_url !== paper.arxiv_url && (
+                      <a href={paper.pdf_url} target="_blank" style={{ color: "#0070f3" }}>
+                        下载 PDF
+                      </a>
+                    )}
                     <button
                       onClick={() => savePaper(paper)}
                       style={{
