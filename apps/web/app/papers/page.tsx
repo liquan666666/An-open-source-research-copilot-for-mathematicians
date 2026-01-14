@@ -185,7 +185,7 @@ export default function PapersPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && searchArxiv()}
-              placeholder="输入关键词搜索 arXiv 论文..."
+              placeholder="输入关键词搜索 arXiv 论文（支持中英文）..."
               style={{
                 flex: 1,
                 padding: 12,
@@ -209,6 +209,9 @@ export default function PapersPage() {
             >
               {searching ? "搜索中..." : "搜索"}
             </button>
+          </div>
+          <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>
+            💡 提示：支持中文搜索（如"代数几何"、"偏微分方程"等），系统会自动翻译为英文搜索 arXiv
           </div>
 
           {searchResults.length > 0 && (
