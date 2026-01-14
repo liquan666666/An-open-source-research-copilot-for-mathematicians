@@ -36,10 +36,23 @@ export default function PapersPage() {
   const searchArxiv = async () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
-    const res = await fetch(`${API_BASE}/papers/search?q=${encodeURIComponent(searchQuery)}`);
-    const data = await res.json();
-    setSearchResults(data);
-    setSearching(false);
+    try {
+      const res = await fetch(`${API_BASE}/papers/search?q=${encodeURIComponent(searchQuery)}`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      setSearchResults(Array.isArray(data) ? data : []);
+      if (data.length === 0) {
+        alert("没有找到相关论文，请尝试其他关键词");
+      }
+    } catch (error) {
+      console.error("搜索出错:", error);
+      alert("搜索失败，请检查网络连接或稍后重试");
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const savePaper = async (paper: Paper) => {

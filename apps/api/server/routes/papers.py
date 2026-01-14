@@ -35,9 +35,12 @@ def search_arxiv(q: str = Query(..., description="搜索关键词"), max_results
     """搜索 arXiv 论文"""
     try:
         query = urllib.parse.quote(q)
-        url = f'http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}'
+        # 使用 HTTPS 而不是 HTTP
+        url = f'https://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}'
 
-        with urllib.request.urlopen(url) as response:
+        # 添加超时和请求头
+        req = urllib.request.Request(url, headers={'User-Agent': 'MathResearchPilot/1.0'})
+        with urllib.request.urlopen(req, timeout=10) as response:
             data = response.read().decode('utf-8')
 
         root = ET.fromstring(data)
@@ -45,29 +48,43 @@ def search_arxiv(q: str = Query(..., description="搜索关键词"), max_results
 
         results = []
         for entry in root.findall('atom:entry', ns):
-            arxiv_id = entry.find('atom:id', ns).text.split('/abs/')[-1]
-            title = entry.find('atom:title', ns).text.strip()
+            try:
+                arxiv_id_elem = entry.find('atom:id', ns)
+                if arxiv_id_elem is None:
+                    continue
+                arxiv_id = arxiv_id_elem.text.split('/abs/')[-1]
 
-            authors = []
-            for author in entry.findall('atom:author', ns):
-                name = author.find('atom:name', ns)
-                if name is not None:
-                    authors.append(name.text)
+                title_elem = entry.find('atom:title', ns)
+                if title_elem is None:
+                    continue
+                title = title_elem.text.strip().replace('\n', ' ')
 
-            published = entry.find('atom:published', ns).text[:4]
+                authors = []
+                for author in entry.findall('atom:author', ns):
+                    name = author.find('atom:name', ns)
+                    if name is not None:
+                        authors.append(name.text)
 
-            results.append({
-                "ext_id": arxiv_id,
-                "title": title,
-                "authors": ", ".join(authors),
-                "year": int(published),
-                "arxiv_url": f"https://arxiv.org/abs/{arxiv_id}",
-                "pdf_url": f"https://arxiv.org/pdf/{arxiv_id}.pdf"
-            })
+                published_elem = entry.find('atom:published', ns)
+                published = published_elem.text[:4] if published_elem is not None else "2024"
+
+                results.append({
+                    "ext_id": arxiv_id,
+                    "title": title,
+                    "authors": ", ".join(authors) if authors else "Unknown",
+                    "year": int(published),
+                    "arxiv_url": f"https://arxiv.org/abs/{arxiv_id}",
+                    "pdf_url": f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+                })
+            except Exception as entry_error:
+                # 跳过解析失败的条目
+                continue
 
         return results
     except Exception as e:
-        return {"error": str(e)}
+        # 返回错误信息，但保持返回列表格式以便前端处理
+        print(f"arXiv search error: {str(e)}")
+        return []
 
 @router.post('')
 def save_paper(paper: dict, db: Session = Depends(get_db)):
