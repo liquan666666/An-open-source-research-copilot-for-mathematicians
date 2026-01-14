@@ -11,13 +11,12 @@ services:
       - CORS_ORIGINS=http://localhost:3000
 
   web:
-    image: node:20-alpine
-    working_dir: /app
-    command: sh -c "corepack enable && npm install && npm run dev"
+    build: ./apps/web
     ports:
       - "3000:3000"
     volumes:
       - ./apps/web:/app
+      - /app/node_modules
     environment:
       - NEXT_PUBLIC_API_BASE=http://localhost:8000
 
