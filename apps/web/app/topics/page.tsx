@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function TopicsPage() {
+  const router = useRouter();
   const topics = [
     {
       id: 1,
@@ -199,6 +201,7 @@ export default function TopicsPage() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/roadmap")}
             style={{
               marginTop: "20px",
               padding: "12px 24px",

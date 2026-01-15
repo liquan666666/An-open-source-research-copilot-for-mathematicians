@@ -6,6 +6,7 @@ import Link from "next/link";
 
 export default function PapersPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
 
   const papers = [
     {
@@ -48,6 +49,28 @@ export default function PapersPage() {
     paper.authors.toLowerCase().includes(searchQuery.toLowerCase()) ||
     paper.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const toggleFavorite = (paperId: number) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(paperId)) {
+        newFavorites.delete(paperId);
+      } else {
+        newFavorites.add(paperId);
+      }
+      return newFavorites;
+    });
+  };
+
+  const handleDownload = (paper: typeof papers[0]) => {
+    // 实际应用中这里会处理真实的下载逻辑
+    alert(`正在下载论文: ${paper.title}`);
+  };
+
+  const handleNote = (paper: typeof papers[0]) => {
+    // 实际应用中这里会打开笔记编辑器
+    alert(`打开笔记: ${paper.title}`);
+  };
 
   return (
     <div style={{ minHeight: "100vh", paddingBottom: "60px" }}>
@@ -211,6 +234,7 @@ export default function PapersPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => handleDownload(paper)}
                 style={{
                   padding: "10px 20px",
                   background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -228,22 +252,24 @@ export default function PapersPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => toggleFavorite(paper.id)}
                 style={{
                   padding: "10px 20px",
-                  background: "white",
-                  color: "#667eea",
-                  border: "2px solid #667eea",
+                  background: favorites.has(paper.id) ? "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" : "white",
+                  color: favorites.has(paper.id) ? "white" : "#667eea",
+                  border: favorites.has(paper.id) ? "none" : "2px solid #667eea",
                   borderRadius: "10px",
                   fontSize: "0.9rem",
                   fontWeight: "600",
                   cursor: "pointer"
                 }}
               >
-                ⭐ 收藏
+                {favorites.has(paper.id) ? "⭐ 已收藏" : "⭐ 收藏"}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => handleNote(paper)}
                 style={{
                   padding: "10px 20px",
                   background: "white",
