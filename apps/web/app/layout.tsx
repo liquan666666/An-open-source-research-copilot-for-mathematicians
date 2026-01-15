@@ -9,9 +9,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
-        <style>{`
+        <style dangerouslySetInnerHTML={{__html: `
           * {
             margin: 0;
             padding: 0;
@@ -19,7 +19,7 @@ export default function RootLayout({
           }
 
           body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             background-attachment: fixed;
             min-height: 100vh;
@@ -29,7 +29,7 @@ export default function RootLayout({
           }
 
           body::before {
-            content: '';
+            content: "";
             position: fixed;
             top: 0;
             left: 0;
@@ -49,7 +49,7 @@ export default function RootLayout({
             margin: 0 auto;
             padding: 40px 20px;
           }
-        `}</style>
+        `}} />
       </head>
       <body>
         <div id="root-content">{children}</div>
