@@ -1,12 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function PapersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [currentPaper, setCurrentPaper] = useState<typeof papers[0] | null>(null);
+  const [noteContent, setNoteContent] = useState("");
+
+  // 从localStorage加载收藏状态
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('paperFavorites');
+    if (savedFavorites) {
+      setFavorites(new Set(JSON.parse(savedFavorites)));
+    }
+  }, []);
 
   const papers = [
     {
@@ -58,18 +69,54 @@ export default function PapersPage() {
       } else {
         newFavorites.add(paperId);
       }
+      // 持久化到localStorage
+      localStorage.setItem('paperFavorites', JSON.stringify(Array.from(newFavorites)));
       return newFavorites;
     });
   };
 
   const handleDownload = (paper: typeof papers[0]) => {
-    // 实际应用中这里会处理真实的下载逻辑
-    alert(`正在下载论文: ${paper.title}`);
+    // 创建一个虚拟的下载链接
+    // 在实际应用中，这里应该是真实的PDF URL
+    const pdfUrl = paper.downloadUrl;
+
+    // 如果有真实URL，直接下载
+    if (pdfUrl && pdfUrl !== "#") {
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `${paper.title}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // 演示：创建一个带有论文信息的文本文件
+      const content = `论文标题: ${paper.title}\n作者: ${paper.authors}\n年份: ${paper.year}\n会议/期刊: ${paper.venue}\n引用次数: ${paper.citations}\n\n摘要:\n${paper.abstract}\n\n标签: ${paper.tags.join(', ')}`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${paper.title.substring(0, 50)}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }
   };
 
   const handleNote = (paper: typeof papers[0]) => {
-    // 实际应用中这里会打开笔记编辑器
-    alert(`打开笔记: ${paper.title}`);
+    setCurrentPaper(paper);
+    // 加载已有笔记
+    const savedNotes = localStorage.getItem(`paper_note_${paper.id}`);
+    setNoteContent(savedNotes || '');
+    setNoteModalOpen(true);
+  };
+
+  const saveNote = () => {
+    if (currentPaper) {
+      localStorage.setItem(`paper_note_${currentPaper.id}`, noteContent);
+      setNoteModalOpen(false);
+      alert('笔记已保存！');
+    }
   };
 
   return (
@@ -328,6 +375,123 @@ export default function PapersPage() {
           <li>引用次数可以帮助评估论文的影响力</li>
         </ul>
       </motion.div>
+
+      {/* Note Modal */}
+      {noteModalOpen && currentPaper && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "20px"
+          }}
+          onClick={() => setNoteModalOpen(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              background: "white",
+              borderRadius: "20px",
+              padding: "32px",
+              maxWidth: "700px",
+              width: "100%",
+              maxHeight: "80vh",
+              overflow: "auto",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{
+              fontSize: "1.5rem",
+              fontWeight: "700",
+              color: "#2d3748",
+              marginBottom: "8px"
+            }}>
+              📝 论文笔记
+            </h3>
+            <p style={{
+              fontSize: "1.1rem",
+              color: "#667eea",
+              marginBottom: "24px",
+              fontWeight: "600"
+            }}>
+              {currentPaper.title}
+            </p>
+
+            <textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder="在这里记录你的笔记、想法和重要观点..."
+              style={{
+                width: "100%",
+                minHeight: "300px",
+                padding: "16px",
+                fontSize: "1rem",
+                border: "2px solid #e9ecef",
+                borderRadius: "12px",
+                outline: "none",
+                fontFamily: "inherit",
+                lineHeight: "1.6",
+                resize: "vertical"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#667eea"}
+              onBlur={(e) => e.target.style.borderColor = "#e9ecef"}
+            />
+
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              marginTop: "24px",
+              justifyContent: "flex-end"
+            }}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setNoteModalOpen(false)}
+                style={{
+                  padding: "12px 24px",
+                  background: "white",
+                  color: "#718096",
+                  border: "2px solid #e9ecef",
+                  borderRadius: "10px",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                取消
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={saveNote}
+                style={{
+                  padding: "12px 24px",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)"
+                }}
+              >
+                💾 保存笔记
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

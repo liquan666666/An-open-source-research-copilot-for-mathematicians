@@ -4,9 +4,29 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+interface Topic {
+  id: number;
+  title: string;
+  area: string;
+  difficulty: string;
+  description: string;
+  keywords: string[];
+  estimatedDuration: string;
+  papers: number;
+  interest: number;
+}
+
 export default function TopicsPage() {
   const router = useRouter();
-  const topics = [
+
+  const handleTopicSelect = (topic: Topic) => {
+    // 将选择的课题存储到localStorage
+    localStorage.setItem('selectedTopic', JSON.stringify(topic));
+    // 跳转到路线图页面
+    router.push('/roadmap');
+  };
+
+  const topics: Topic[] = [
     {
       id: 1,
       title: "拓扑空间中的不动点定理及其应用",
@@ -201,7 +221,7 @@ export default function TopicsPage() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => router.push("/roadmap")}
+            onClick={() => handleTopicSelect(topic)}
             style={{
               marginTop: "20px",
               padding: "12px 24px",

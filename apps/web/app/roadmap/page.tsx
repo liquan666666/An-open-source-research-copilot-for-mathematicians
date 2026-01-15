@@ -1,8 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+
+interface SelectedTopic {
+  id: number;
+  title: string;
+  area: string;
+  difficulty: string;
+  description: string;
+  keywords: string[];
+  estimatedDuration: string;
+  papers: number;
+  interest: number;
+}
 
 interface LearningItem {
   title: string;
@@ -23,6 +35,15 @@ interface Phase {
 
 export default function RoadmapPage() {
   const [expandedPhase, setExpandedPhase] = useState<number | null>(0);
+  const [selectedTopic, setSelectedTopic] = useState<SelectedTopic | null>(null);
+
+  useEffect(() => {
+    // 从localStorage读取所选课题
+    const topicData = localStorage.getItem('selectedTopic');
+    if (topicData) {
+      setSelectedTopic(JSON.parse(topicData));
+    }
+  }, []);
 
   const phases: Phase[] = [
     {
@@ -248,6 +269,108 @@ export default function RoadmapPage() {
           为您生成的3个月数学研究执行计划 - 从基础到论文产出
         </p>
       </motion.div>
+
+      {/* Selected Topic Card */}
+      {selectedTopic && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          style={{
+            background: "rgba(255, 255, 255, 0.95)",
+            borderRadius: "20px",
+            padding: "28px",
+            marginBottom: "32px",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
+            backdropFilter: "blur(10px)",
+            border: "2px solid rgba(102, 126, 234, 0.3)"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+            <span style={{ fontSize: "2rem" }}>🎯</span>
+            <h2 style={{
+              fontSize: "1.8rem",
+              fontWeight: "700",
+              color: "#2d3748",
+              margin: 0
+            }}>
+              您选择的课题
+            </h2>
+          </div>
+
+          <h3 style={{
+            fontSize: "1.5rem",
+            fontWeight: "700",
+            color: "#667eea",
+            marginBottom: "16px",
+            lineHeight: "1.4"
+          }}>
+            {selectedTopic.title}
+          </h3>
+
+          <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+            <span style={{
+              padding: "6px 14px",
+              borderRadius: "12px",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+              background: "rgba(102, 126, 234, 0.1)",
+              color: "#667eea"
+            }}>
+              📚 {selectedTopic.area}
+            </span>
+            <span style={{
+              padding: "6px 14px",
+              borderRadius: "12px",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+              background: "rgba(79, 172, 254, 0.1)",
+              color: "#4facfe"
+            }}>
+              🎯 {selectedTopic.difficulty}
+            </span>
+            <span style={{
+              padding: "6px 14px",
+              borderRadius: "12px",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+              background: "rgba(67, 233, 123, 0.1)",
+              color: "#43e97b"
+            }}>
+              ⏱️ {selectedTopic.estimatedDuration}
+            </span>
+            <span style={{
+              padding: "6px 14px",
+              borderRadius: "12px",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+              background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+              color: "white"
+            }}>
+              ⭐ {selectedTopic.interest}
+            </span>
+          </div>
+
+          <p style={{ color: "#4a5568", lineHeight: "1.7", marginBottom: "12px" }}>
+            {selectedTopic.description}
+          </p>
+
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {selectedTopic.keywords.map((keyword, i) => (
+              <span key={i} style={{
+                padding: "4px 12px",
+                borderRadius: "8px",
+                fontSize: "0.8rem",
+                background: "#f8f9fa",
+                color: "#718096",
+                border: "1px solid #e9ecef"
+              }}>
+                #{keyword}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Timeline */}
       <motion.div
