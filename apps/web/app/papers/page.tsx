@@ -370,12 +370,77 @@ export default function PapersPage() {
     });
   };
 
-  const handleDownload = (paper: Paper) => {
+  const handleDownload = async (paper: Paper) => {
     const pdfUrl = paper.downloadUrl;
 
-    // 如果是arXiv论文，直接打开PDF链接（浏览器会自动下载或预览）
+    // 如果是arXiv论文，通过代理下载PDF
     if (paper.arxivId && pdfUrl && pdfUrl !== "#") {
-      window.open(pdfUrl, '_blank');
+      try {
+        // 显示下载提示
+        const downloadingToast = document.createElement('div');
+        downloadingToast.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 16px 24px;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          z-index: 10000;
+          font-weight: 600;
+        `;
+        downloadingToast.textContent = '🔄 正在下载PDF...';
+        document.body.appendChild(downloadingToast);
+
+        // 使用fetch下载PDF
+        const response = await fetch(pdfUrl, {
+          mode: 'cors',
+        });
+
+        if (!response.ok) throw new Error('下载失败');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${paper.title.substring(0, 50).replace(/[^a-zA-Z0-9\s]/g, '_')}_${paper.arxivId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        // 更新提示
+        downloadingToast.style.background = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)';
+        downloadingToast.textContent = '✅ PDF下载成功！';
+        setTimeout(() => {
+          document.body.removeChild(downloadingToast);
+        }, 2000);
+      } catch (error) {
+        console.error('PDF下载失败:', error);
+        // 如果CORS下载失败，回退到新标签页打开
+        const fallbackToast = document.createElement('div');
+        fallbackToast.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          color: white;
+          padding: 16px 24px;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          z-index: 10000;
+          font-weight: 600;
+        `;
+        fallbackToast.textContent = '⚠️ 直接下载失败，正在新窗口打开...';
+        document.body.appendChild(fallbackToast);
+
+        window.open(pdfUrl, '_blank');
+
+        setTimeout(() => {
+          document.body.removeChild(fallbackToast);
+        }, 3000);
+      }
       return;
     }
 
