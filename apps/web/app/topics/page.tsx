@@ -29,17 +29,6 @@ export default function TopicsPage() {
   const topics: Topic[] = [
     {
       id: 1,
-      title: "拓扑空间中的不动点定理及其应用",
-      area: "拓扑学 · 泛函分析",
-      difficulty: "中等",
-      description: "研究非紧拓扑空间上的不动点定理，探索其在微分方程解的存在性证明中的应用。",
-      keywords: ["不动点定理", "拓扑空间", "微分方程"],
-      estimatedDuration: "3-4个月",
-      papers: 15,
-      interest: 8.5
-    },
-    {
-      id: 2,
       title: "图神经网络在组合优化中的理论基础",
       area: "图论 · 机器学习理论",
       difficulty: "较难",
@@ -50,7 +39,73 @@ export default function TopicsPage() {
       interest: 9.2
     },
     {
+      id: 2,
+      title: "深度学习中的泛化理论研究",
+      area: "统计学习理论 · 深度学习",
+      difficulty: "较难",
+      description: "研究过参数化神经网络的泛化能力，探索隐式正则化现象的数学本质。",
+      keywords: ["泛化理论", "神经网络", "统计学习"],
+      estimatedDuration: "5-6个月",
+      papers: 28,
+      interest: 9.0
+    },
+    {
       id: 3,
+      title: "黎曼流形上的最优传输理论",
+      area: "微分几何 · 最优传输",
+      difficulty: "困难",
+      description: "研究黎曼流形上Wasserstein距离的几何性质及其在形状分析中的应用。",
+      keywords: ["黎曼几何", "最优传输", "Wasserstein距离"],
+      estimatedDuration: "6-8个月",
+      papers: 20,
+      interest: 8.8
+    },
+    {
+      id: 4,
+      title: "拓扑空间中的不动点定理及其应用",
+      area: "拓扑学 · 泛函分析",
+      difficulty: "中等",
+      description: "研究非紧拓扑空间上的不动点定理，探索其在微分方程解的存在性证明中的应用。",
+      keywords: ["不动点定理", "拓扑空间", "微分方程"],
+      estimatedDuration: "3-4个月",
+      papers: 15,
+      interest: 8.5
+    },
+    {
+      id: 5,
+      title: "随机微分方程的数值求解新方法",
+      area: "随机分析 · 数值计算",
+      difficulty: "中等",
+      description: "开发基于机器学习的随机微分方程高效数值求解算法，提升计算效率。",
+      keywords: ["随机微分方程", "数值方法", "机器学习"],
+      estimatedDuration: "4-5个月",
+      papers: 19,
+      interest: 8.3
+    },
+    {
+      id: 6,
+      title: "代数拓扑中的持久同调计算方法",
+      area: "代数拓扑 · 拓扑数据分析",
+      difficulty: "中等",
+      description: "研究高维数据的拓扑特征提取，开发快速持久同调计算算法。",
+      keywords: ["持久同调", "拓扑数据分析", "计算拓扑"],
+      estimatedDuration: "4个月",
+      papers: 22,
+      interest: 8.1
+    },
+    {
+      id: 7,
+      title: "非线性偏微分方程的正则性理论",
+      area: "偏微分方程 · 变分法",
+      difficulty: "困难",
+      description: "研究椭圆型和抛物型方程解的正则性，探索最优正则性条件。",
+      keywords: ["PDE", "正则性", "变分法"],
+      estimatedDuration: "6-7个月",
+      papers: 17,
+      interest: 7.9
+    },
+    {
+      id: 8,
       title: "高维概率分布的采样算法收敛性分析",
       area: "概率论 · 统计学",
       difficulty: "中等",
@@ -59,8 +114,55 @@ export default function TopicsPage() {
       estimatedDuration: "3个月",
       papers: 18,
       interest: 7.8
+    },
+    {
+      id: 9,
+      title: "谱图理论在网络科学中的应用",
+      area: "图论 · 网络科学",
+      difficulty: "中等",
+      description: "利用图的谱性质分析复杂网络结构，研究社区检测和网络中心性问题。",
+      keywords: ["谱图理论", "复杂网络", "社区检测"],
+      estimatedDuration: "3-4个月",
+      papers: 21,
+      interest: 7.6
+    },
+    {
+      id: 10,
+      title: "模形式与椭圆曲线的算术性质",
+      area: "数论 · 代数几何",
+      difficulty: "困难",
+      description: "研究模形式与椭圆曲线L函数之间的关系，探索BSD猜想的特殊情形。",
+      keywords: ["数论", "模形式", "椭圆曲线"],
+      estimatedDuration: "7-8个月",
+      papers: 14,
+      interest: 7.4
+    },
+    {
+      id: 11,
+      title: "算子代数中的K理论及其应用",
+      area: "泛函分析 · 算子代数",
+      difficulty: "困难",
+      description: "研究C*-代数的K理论分类，探索在量子场论中的应用。",
+      keywords: ["算子代数", "K理论", "量子场论"],
+      estimatedDuration: "6-7个月",
+      papers: 16,
+      interest: 7.2
+    },
+    {
+      id: 12,
+      title: "凸优化在统计推断中的理论与应用",
+      area: "凸优化 · 统计学",
+      difficulty: "中等",
+      description: "研究高维统计问题的凸松弛方法，分析估计量的统计性质。",
+      keywords: ["凸优化", "高维统计", "稀疏估计"],
+      estimatedDuration: "4-5个月",
+      papers: 25,
+      interest: 7.0
     }
   ];
+
+  // 按兴趣评分降序排序
+  const sortedTopics = [...topics].sort((a, b) => b.interest - a.interest);
 
   const difficultyColors = {
     "简单": "#43e97b",
@@ -112,7 +214,7 @@ export default function TopicsPage() {
       </motion.div>
 
       {/* Topics */}
-      {topics.map((topic, index) => (
+      {sortedTopics.map((topic, index) => (
         <motion.div
           key={topic.id}
           initial={{ opacity: 0, y: 20 }}

@@ -370,77 +370,47 @@ export default function PapersPage() {
     });
   };
 
-  const handleDownload = async (paper: Paper) => {
+  const handleDownload = (paper: Paper) => {
     const pdfUrl = paper.downloadUrl;
 
-    // 如果是arXiv论文，通过代理下载PDF
+    // 显示下载提示
+    const downloadingToast = document.createElement('div');
+    downloadingToast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 10000;
+      font-weight: 600;
+    `;
+
+    // 如果是arXiv论文，直接在新窗口打开（浏览器会处理下载）
     if (paper.arxivId && pdfUrl && pdfUrl !== "#") {
-      try {
-        // 显示下载提示
-        const downloadingToast = document.createElement('div');
-        downloadingToast.style.cssText = `
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          padding: 16px 24px;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          z-index: 10000;
-          font-weight: 600;
-        `;
-        downloadingToast.textContent = '🔄 正在下载PDF...';
-        document.body.appendChild(downloadingToast);
+      downloadingToast.textContent = '📥 正在打开PDF下载...';
+      document.body.appendChild(downloadingToast);
 
-        // 使用fetch下载PDF
-        const response = await fetch(pdfUrl, {
-          mode: 'cors',
-        });
+      // 创建一个隐藏的a标签并点击
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-        if (!response.ok) throw new Error('下载失败');
+      // 更新提示
+      downloadingToast.style.background = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)';
+      downloadingToast.textContent = '✅ PDF已在新标签页打开，请查看浏览器下载';
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${paper.title.substring(0, 50).replace(/[^a-zA-Z0-9\s]/g, '_')}_${paper.arxivId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
-        // 更新提示
-        downloadingToast.style.background = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)';
-        downloadingToast.textContent = '✅ PDF下载成功！';
-        setTimeout(() => {
+      setTimeout(() => {
+        if (document.body.contains(downloadingToast)) {
           document.body.removeChild(downloadingToast);
-        }, 2000);
-      } catch (error) {
-        console.error('PDF下载失败:', error);
-        // 如果CORS下载失败，回退到新标签页打开
-        const fallbackToast = document.createElement('div');
-        fallbackToast.style.cssText = `
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          color: white;
-          padding: 16px 24px;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          z-index: 10000;
-          font-weight: 600;
-        `;
-        fallbackToast.textContent = '⚠️ 直接下载失败，正在新窗口打开...';
-        document.body.appendChild(fallbackToast);
-
-        window.open(pdfUrl, '_blank');
-
-        setTimeout(() => {
-          document.body.removeChild(fallbackToast);
-        }, 3000);
-      }
+        }
+      }, 3000);
       return;
     }
 
@@ -455,16 +425,28 @@ export default function PapersPage() {
       document.body.removeChild(link);
     } else {
       // 演示：创建一个带有论文信息的文本文件
+      downloadingToast.textContent = '📥 正在生成论文信息文件...';
+      document.body.appendChild(downloadingToast);
+
       const content = `论文标题: ${paper.title}\n作者: ${paper.authors}\n年份: ${paper.year}\n会议/期刊: ${paper.venue}\n引用次数: ${paper.citations}\n\n摘要:\n${paper.abstract}\n\n标签: ${paper.tags.join(', ')}`;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${paper.title.substring(0, 50)}.txt`;
+      link.download = `${paper.title.substring(0, 50).replace(/[^a-zA-Z0-9\s]/g, '_')}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+
+      downloadingToast.style.background = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100())';
+      downloadingToast.textContent = '✅ 论文信息文件已下载';
+
+      setTimeout(() => {
+        if (document.body.contains(downloadingToast)) {
+          document.body.removeChild(downloadingToast);
+        }
+      }, 2000);
     }
   };
 
