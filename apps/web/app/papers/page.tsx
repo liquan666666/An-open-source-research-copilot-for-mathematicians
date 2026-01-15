@@ -4,12 +4,28 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
+interface Paper {
+  id: number;
+  title: string;
+  authors: string;
+  year: number;
+  venue: string;
+  citations: number;
+  abstract: string;
+  tags: string[];
+  downloadUrl: string;
+  arxivId?: string;
+}
+
 export default function PapersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [noteModalOpen, setNoteModalOpen] = useState(false);
-  const [currentPaper, setCurrentPaper] = useState<typeof papers[0] | null>(null);
+  const [currentPaper, setCurrentPaper] = useState<Paper | null>(null);
   const [noteContent, setNoteContent] = useState("");
+  const [isSearchingArxiv, setIsSearchingArxiv] = useState(false);
+  const [arxivResults, setArxivResults] = useState<Paper[]>([]);
+  const [showArxivSearch, setShowArxivSearch] = useState(false);
 
   // 从localStorage加载收藏状态
   useEffect(() => {
@@ -19,38 +35,238 @@ export default function PapersPage() {
     }
   }, []);
 
-  const papers = [
+  // 扩展的论文数据库（数学相关论文）
+  const papers: Paper[] = [
+    // 拓扑学相关
     {
       id: 1,
-      title: "Deep Residual Learning for Image Recognition",
-      authors: "Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun",
-      year: 2016,
-      venue: "CVPR",
-      citations: 89234,
-      abstract: "Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks...",
-      tags: ["Deep Learning", "Computer Vision", "ResNet"],
-      downloadUrl: "#"
+      title: "The Poincaré Conjecture and Ricci Flow",
+      authors: "Grisha Perelman",
+      year: 2003,
+      venue: "arXiv",
+      citations: 5234,
+      abstract: "We present a proof of the Poincaré conjecture using Ricci flow with surgery on three-manifolds...",
+      tags: ["Topology", "Differential Geometry", "Poincaré Conjecture"],
+      downloadUrl: "#",
+      arxivId: "math/0303109"
     },
     {
       id: 2,
-      title: "Attention Is All You Need",
-      authors: "Ashish Vaswani, et al.",
-      year: 2017,
-      venue: "NeurIPS",
-      citations: 76543,
-      abstract: "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks...",
-      tags: ["Transformer", "NLP", "Attention Mechanism"],
+      title: "Persistent Homology: Theory and Practice",
+      authors: "Herbert Edelsbrunner, John Harer",
+      year: 2010,
+      venue: "European Congress of Mathematics",
+      citations: 3421,
+      abstract: "An introduction to persistent homology methods for topological data analysis and their applications...",
+      tags: ["Algebraic Topology", "Persistent Homology", "TDA"],
+      downloadUrl: "#"
+    },
+    // 代数几何
+    {
+      id: 3,
+      title: "Fermat's Last Theorem",
+      authors: "Andrew Wiles",
+      year: 1995,
+      venue: "Annals of Mathematics",
+      citations: 8932,
+      abstract: "This paper presents a proof of Fermat's Last Theorem using modular forms and elliptic curves...",
+      tags: ["Number Theory", "Elliptic Curves", "Fermat"],
       downloadUrl: "#"
     },
     {
-      id: 3,
-      title: "BERT: Pre-training of Deep Bidirectional Transformers",
-      authors: "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova",
-      year: 2019,
-      venue: "NAACL",
-      citations: 65432,
-      abstract: "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations...",
-      tags: ["BERT", "Pre-training", "NLP"],
+      id: 4,
+      title: "Introduction to Algebraic Geometry",
+      authors: "Igor Shafarevich",
+      year: 1994,
+      venue: "Springer",
+      citations: 4523,
+      abstract: "A comprehensive introduction to the basic concepts and methods of modern algebraic geometry...",
+      tags: ["Algebraic Geometry", "Varieties", "Schemes"],
+      downloadUrl: "#"
+    },
+    // 微分几何
+    {
+      id: 5,
+      title: "Differential Geometry of Curves and Surfaces",
+      authors: "Manfredo P. do Carmo",
+      year: 1976,
+      venue: "Prentice-Hall",
+      citations: 6782,
+      abstract: "A classical textbook on the differential geometry of curves and surfaces in Euclidean space...",
+      tags: ["Differential Geometry", "Curves", "Surfaces"],
+      downloadUrl: "#"
+    },
+    {
+      id: 6,
+      title: "Riemannian Geometry",
+      authors: "Peter Petersen",
+      year: 2016,
+      venue: "Springer GTM",
+      citations: 2341,
+      abstract: "Introduction to Riemannian manifolds, curvature, and geometric analysis techniques...",
+      tags: ["Riemannian Geometry", "Curvature", "Manifolds"],
+      downloadUrl: "#"
+    },
+    // 泛函分析
+    {
+      id: 7,
+      title: "Functional Analysis",
+      authors: "Walter Rudin",
+      year: 1991,
+      venue: "McGraw-Hill",
+      citations: 12453,
+      abstract: "A comprehensive introduction to functional analysis covering Banach and Hilbert spaces...",
+      tags: ["Functional Analysis", "Banach Spaces", "Hilbert Spaces"],
+      downloadUrl: "#"
+    },
+    {
+      id: 8,
+      title: "Banach-Tarski Paradox",
+      authors: "Stan Wagon",
+      year: 1985,
+      venue: "Cambridge University Press",
+      citations: 1876,
+      abstract: "An exploration of the paradoxical decomposition of a sphere using the axiom of choice...",
+      tags: ["Set Theory", "Measure Theory", "Paradox"],
+      downloadUrl: "#"
+    },
+    // 偏微分方程
+    {
+      id: 9,
+      title: "Partial Differential Equations",
+      authors: "Lawrence C. Evans",
+      year: 2010,
+      venue: "AMS Graduate Studies",
+      citations: 15234,
+      abstract: "A graduate-level introduction to the modern theory of partial differential equations...",
+      tags: ["PDE", "Analysis", "Mathematical Physics"],
+      downloadUrl: "#"
+    },
+    {
+      id: 10,
+      title: "The Navier-Stokes Equations",
+      authors: "Constantin Foias, Roger Temam",
+      year: 2001,
+      venue: "Springer",
+      citations: 4567,
+      abstract: "Mathematical analysis of the Navier-Stokes equations for fluid dynamics...",
+      tags: ["PDE", "Fluid Dynamics", "Navier-Stokes"],
+      downloadUrl: "#"
+    },
+    // 数论
+    {
+      id: 11,
+      title: "An Introduction to the Theory of Numbers",
+      authors: "G. H. Hardy, E. M. Wright",
+      year: 2008,
+      venue: "Oxford University Press",
+      citations: 9876,
+      abstract: "A classic introduction to elementary and analytic number theory...",
+      tags: ["Number Theory", "Prime Numbers", "Diophantine Equations"],
+      downloadUrl: "#"
+    },
+    {
+      id: 12,
+      title: "The Riemann Hypothesis",
+      authors: "Peter Sarnak",
+      year: 2005,
+      venue: "Clay Mathematics Institute",
+      citations: 3421,
+      abstract: "Survey of the Riemann Hypothesis and its implications for prime number distribution...",
+      tags: ["Number Theory", "Riemann Hypothesis", "Zeta Function"],
+      downloadUrl: "#"
+    },
+    // 组合数学
+    {
+      id: 13,
+      title: "The Probabilistic Method",
+      authors: "Noga Alon, Joel H. Spencer",
+      year: 2016,
+      venue: "Wiley",
+      citations: 5632,
+      abstract: "Introduction to probabilistic methods in combinatorics with numerous applications...",
+      tags: ["Combinatorics", "Probabilistic Method", "Graph Theory"],
+      downloadUrl: "#"
+    },
+    {
+      id: 14,
+      title: "Enumerative Combinatorics",
+      authors: "Richard P. Stanley",
+      year: 2011,
+      venue: "Cambridge University Press",
+      citations: 4234,
+      abstract: "Comprehensive treatment of counting techniques and generating functions...",
+      tags: ["Combinatorics", "Enumeration", "Generating Functions"],
+      downloadUrl: "#"
+    },
+    // 图论
+    {
+      id: 15,
+      title: "Graph Theory",
+      authors: "Reinhard Diestel",
+      year: 2017,
+      venue: "Springer GTM",
+      citations: 7654,
+      abstract: "A modern introduction to graph theory covering classical and contemporary topics...",
+      tags: ["Graph Theory", "Networks", "Algorithms"],
+      downloadUrl: "#"
+    },
+    // 优化理论
+    {
+      id: 16,
+      title: "Convex Optimization",
+      authors: "Stephen Boyd, Lieven Vandenberghe",
+      year: 2004,
+      venue: "Cambridge University Press",
+      citations: 45678,
+      abstract: "Comprehensive introduction to convex optimization theory and algorithms...",
+      tags: ["Optimization", "Convex Analysis", "Algorithms"],
+      downloadUrl: "#"
+    },
+    {
+      id: 17,
+      title: "Nonlinear Programming",
+      authors: "Dimitri P. Bertsekas",
+      year: 2016,
+      venue: "Athena Scientific",
+      citations: 8765,
+      abstract: "Theory and algorithms for constrained optimization problems...",
+      tags: ["Optimization", "Nonlinear Programming", "Algorithms"],
+      downloadUrl: "#"
+    },
+    // 概率论与统计
+    {
+      id: 18,
+      title: "Probability Theory: The Logic of Science",
+      authors: "E. T. Jaynes",
+      year: 2003,
+      venue: "Cambridge University Press",
+      citations: 6543,
+      abstract: "A Bayesian approach to probability theory and its philosophical foundations...",
+      tags: ["Probability", "Bayesian Statistics", "Information Theory"],
+      downloadUrl: "#"
+    },
+    {
+      id: 19,
+      title: "Measure Theory",
+      authors: "Paul R. Halmos",
+      year: 1974,
+      venue: "Springer",
+      citations: 11234,
+      abstract: "Classic introduction to measure theory and integration...",
+      tags: ["Measure Theory", "Integration", "Real Analysis"],
+      downloadUrl: "#"
+    },
+    // 机器学习中的数学
+    {
+      id: 20,
+      title: "Mathematics for Machine Learning",
+      authors: "Marc Peter Deisenroth, A. Aldo Faisal, Cheng Soon Ong",
+      year: 2020,
+      venue: "Cambridge University Press",
+      citations: 3456,
+      abstract: "Mathematical foundations of machine learning including linear algebra, probability, and optimization...",
+      tags: ["Machine Learning", "Applied Mathematics", "Linear Algebra"],
       downloadUrl: "#"
     }
   ];
@@ -60,6 +276,85 @@ export default function PapersPage() {
     paper.authors.toLowerCase().includes(searchQuery.toLowerCase()) ||
     paper.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  // 合并本地论文和arXiv搜索结果
+  const allPapers = showArxivSearch ? [...filteredPapers, ...arxivResults] : filteredPapers;
+
+  // arXiv搜索功能
+  const searchArxiv = async () => {
+    if (!searchQuery.trim()) return;
+
+    setIsSearchingArxiv(true);
+    try {
+      // 使用arXiv API搜索
+      const response = await fetch(
+        `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(searchQuery)}&start=0&max_results=10&sortBy=relevance&sortOrder=descending`
+      );
+
+      const text = await response.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(text, "text/xml");
+
+      const entries = xmlDoc.getElementsByTagName("entry");
+      const results: Paper[] = [];
+
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+
+        // 提取arXiv ID
+        const idElement = entry.getElementsByTagName("id")[0];
+        const arxivUrl = idElement?.textContent || "";
+        const arxivId = arxivUrl.split("/abs/")[1] || "";
+
+        // 提取标题
+        const titleElement = entry.getElementsByTagName("title")[0];
+        const title = titleElement?.textContent?.replace(/\s+/g, " ").trim() || "";
+
+        // 提取作者
+        const authorElements = entry.getElementsByTagName("author");
+        const authors = Array.from(authorElements)
+          .map(author => author.getElementsByTagName("name")[0]?.textContent || "")
+          .join(", ");
+
+        // 提取摘要
+        const summaryElement = entry.getElementsByTagName("summary")[0];
+        const abstract = summaryElement?.textContent?.replace(/\s+/g, " ").trim().substring(0, 200) + "..." || "";
+
+        // 提取发表日期
+        const publishedElement = entry.getElementsByTagName("published")[0];
+        const publishedDate = publishedElement?.textContent || "";
+        const year = new Date(publishedDate).getFullYear();
+
+        // 提取分类作为标签
+        const categoryElements = entry.getElementsByTagName("category");
+        const tags = Array.from(categoryElements)
+          .slice(0, 3)
+          .map(cat => cat.getAttribute("term") || "")
+          .filter(Boolean);
+
+        results.push({
+          id: 1000 + i,
+          title,
+          authors,
+          year,
+          venue: "arXiv",
+          citations: 0,
+          abstract,
+          tags,
+          downloadUrl: `https://arxiv.org/pdf/${arxivId}.pdf`,
+          arxivId
+        });
+      }
+
+      setArxivResults(results);
+      setShowArxivSearch(true);
+    } catch (error) {
+      console.error("arXiv搜索失败:", error);
+      alert("搜索失败，请检查网络连接或稍后重试");
+    } finally {
+      setIsSearchingArxiv(false);
+    }
+  };
 
   const toggleFavorite = (paperId: number) => {
     setFavorites(prev => {
@@ -75,16 +370,21 @@ export default function PapersPage() {
     });
   };
 
-  const handleDownload = (paper: typeof papers[0]) => {
-    // 创建一个虚拟的下载链接
-    // 在实际应用中，这里应该是真实的PDF URL
+  const handleDownload = (paper: Paper) => {
     const pdfUrl = paper.downloadUrl;
+
+    // 如果是arXiv论文，直接打开PDF链接（浏览器会自动下载或预览）
+    if (paper.arxivId && pdfUrl && pdfUrl !== "#") {
+      window.open(pdfUrl, '_blank');
+      return;
+    }
 
     // 如果有真实URL，直接下载
     if (pdfUrl && pdfUrl !== "#") {
       const link = document.createElement('a');
       link.href = pdfUrl;
       link.download = `${paper.title}.pdf`;
+      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -176,23 +476,97 @@ export default function PapersPage() {
           border: "1px solid rgba(255, 255, 255, 0.3)"
         }}
       >
-        <input
-          type="text"
-          placeholder="🔍 搜索论文标题、作者或关键词..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "14px 20px",
-            fontSize: "1rem",
-            border: "2px solid #e9ecef",
-            borderRadius: "12px",
-            outline: "none",
-            transition: "border-color 0.2s"
-          }}
-          onFocus={(e) => e.target.style.borderColor = "#667eea"}
-          onBlur={(e) => e.target.style.borderColor = "#e9ecef"}
-        />
+        <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
+          <input
+            type="text"
+            placeholder="🔍 搜索论文标题、作者或关键词..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowArxivSearch(false);
+            }}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                searchArxiv();
+              }
+            }}
+            style={{
+              flex: 1,
+              padding: "14px 20px",
+              fontSize: "1rem",
+              border: "2px solid #e9ecef",
+              borderRadius: "12px",
+              outline: "none",
+              transition: "border-color 0.2s"
+            }}
+            onFocus={(e) => e.target.style.borderColor = "#667eea"}
+            onBlur={(e) => e.target.style.borderColor = "#e9ecef"}
+          />
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={searchArxiv}
+            disabled={isSearchingArxiv || !searchQuery.trim()}
+            style={{
+              padding: "14px 28px",
+              background: isSearchingArxiv || !searchQuery.trim()
+                ? "#cbd5e0"
+                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              border: "none",
+              borderRadius: "12px",
+              fontSize: "0.95rem",
+              fontWeight: "600",
+              cursor: isSearchingArxiv || !searchQuery.trim() ? "not-allowed" : "pointer",
+              boxShadow: isSearchingArxiv || !searchQuery.trim()
+                ? "none"
+                : "0 4px 12px rgba(102, 126, 234, 0.3)",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {isSearchingArxiv ? "🔄 搜索中..." : "🌐 arXiv搜索"}
+          </motion.button>
+        </div>
+
+        {showArxivSearch && arxivResults.length > 0 && (
+          <div style={{
+            padding: "12px 16px",
+            background: "#f0f9ff",
+            borderRadius: "10px",
+            fontSize: "0.9rem",
+            color: "#0369a1",
+            fontWeight: "500",
+            border: "1px solid #bae6fd"
+          }}>
+            ✨ 找到 {arxivResults.length} 篇 arXiv 论文（支持直接下载PDF）
+          </div>
+        )}
+
+        {showArxivSearch && (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              setShowArxivSearch(false);
+              setArxivResults([]);
+            }}
+            style={{
+              marginTop: "12px",
+              padding: "8px 16px",
+              background: "white",
+              color: "#718096",
+              border: "2px solid #e9ecef",
+              borderRadius: "10px",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+              cursor: "pointer"
+            }}
+          >
+            ✕ 清除 arXiv 搜索结果
+          </motion.button>
+        )}
       </motion.div>
 
       {/* Papers List */}
@@ -201,7 +575,7 @@ export default function PapersPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        {filteredPapers.map((paper, index) => (
+        {allPapers.map((paper, index) => (
           <motion.div
             key={paper.id}
             initial={{ opacity: 0, y: 20 }}
@@ -220,15 +594,31 @@ export default function PapersPage() {
             }}
           >
             {/* Title */}
-            <h3 style={{
-              fontSize: "1.3rem",
-              fontWeight: "700",
-              color: "#2d3748",
-              marginBottom: "12px",
-              lineHeight: "1.4"
-            }}>
-              {paper.title}
-            </h3>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "12px" }}>
+              <h3 style={{
+                flex: 1,
+                fontSize: "1.3rem",
+                fontWeight: "700",
+                color: "#2d3748",
+                lineHeight: "1.4",
+                margin: 0
+              }}>
+                {paper.title}
+              </h3>
+              {paper.arxivId && (
+                <span style={{
+                  padding: "4px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.75rem",
+                  fontWeight: "600",
+                  background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                  color: "white",
+                  whiteSpace: "nowrap"
+                }}>
+                  arXiv
+                </span>
+              )}
+            </div>
 
             {/* Metadata */}
             <div style={{
@@ -335,7 +725,7 @@ export default function PapersPage() {
         ))}
       </motion.div>
 
-      {filteredPapers.length === 0 && (
+      {allPapers.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -369,10 +759,12 @@ export default function PapersPage() {
           💡 使用技巧
         </h4>
         <ul style={{ color: "#4a5568", lineHeight: "1.8", margin: 0, paddingLeft: "20px" }}>
-          <li>使用搜索框快速查找相关论文</li>
-          <li>点击"收藏"按钮将重要文献加入个人文库</li>
-          <li>在"笔记"中记录阅读心得和重要观点</li>
-          <li>引用次数可以帮助评估论文的影响力</li>
+          <li>本地数据库包含20篇经典数学论文，覆盖拓扑学、代数几何、泛函分析等领域</li>
+          <li>点击"🌐 arXiv搜索"按钮可搜索arXiv.org上的任意论文（支持直接下载PDF）</li>
+          <li>arXiv论文带有特殊标记，点击下载会在新标签页打开PDF</li>
+          <li>点击"收藏"按钮将重要文献加入个人文库，收藏状态会自动保存</li>
+          <li>在"笔记"中记录阅读心得和重要观点，笔记会保存在浏览器本地</li>
+          <li>使用搜索框可以同时搜索标题、作者和标签</li>
         </ul>
       </motion.div>
 
