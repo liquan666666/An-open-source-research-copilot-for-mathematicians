@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 interface Topic {
   id: number;
@@ -18,6 +19,24 @@ interface Topic {
 
 export default function TopicsPage() {
   const router = useRouter();
+  const [interestOverrides, setInterestOverrides] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    const savedOverrides = localStorage.getItem("topicInterestOverrides");
+    if (savedOverrides) {
+      setInterestOverrides(JSON.parse(savedOverrides));
+    }
+  }, []);
+
+  const updateInterest = (topicId: number, value: number) => {
+    setInterestOverrides((prev) => {
+      const next = { ...prev, [topicId]: value };
+      localStorage.setItem("topicInterestOverrides", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const clampInterest = (value: number) => Math.min(10, Math.max(1, value));
 
   const handleTopicSelect = (topic: Topic) => {
     // 将选择的课题存储到localStorage
@@ -161,8 +180,17 @@ export default function TopicsPage() {
     }
   ];
 
+  const scoredTopics = useMemo(
+    () =>
+      topics.map((topic) => ({
+        ...topic,
+        interest: interestOverrides[topic.id] ?? topic.interest
+      })),
+    [interestOverrides, topics]
+  );
+
   // 按兴趣评分降序排序
-  const sortedTopics = [...topics].sort((a, b) => b.interest - a.interest);
+  const sortedTopics = [...scoredTopics].sort((a, b) => b.interest - a.interest);
 
   const difficultyColors = {
     "简单": "#43e97b",
@@ -210,6 +238,28 @@ export default function TopicsPage() {
         </h1>
         <p style={{ fontSize: "1.1rem", color: "#ffffff", opacity: 0.9 }}>
           基于您的研究方向和兴趣，为您推荐以下课题
+        </p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        style={{
+          background: "rgba(255, 255, 255, 0.95)",
+          borderRadius: "16px",
+          padding: "20px",
+          marginBottom: "24px",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255, 255, 255, 0.3)"
+        }}
+      >
+        <h3 style={{ fontSize: "1.2rem", fontWeight: "700", color: "#2d3748", marginBottom: "8px" }}>
+          🎛️ 调整研究兴趣
+        </h3>
+        <p style={{ color: "#4a5568", margin: 0, lineHeight: "1.6" }}>
+          通过下面每个课题的兴趣评分滑块，直接调整排序结果，系统会记住你的偏好。
         </p>
       </motion.div>
 
@@ -302,6 +352,43 @@ export default function TopicsPage() {
           <p style={{ color: "#4a5568", lineHeight: "1.7", marginBottom: "16px" }}>
             {topic.description}
           </p>
+
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginBottom: "16px"
+          }}>
+            <span style={{ fontSize: "0.9rem", fontWeight: "600", color: "#2d3748" }}>
+              🎚️ 兴趣评分调整
+            </span>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              step={0.1}
+              value={topic.interest}
+              onChange={(event) => updateInterest(topic.id, clampInterest(Number(event.target.value)))}
+              style={{ flex: 1, accentColor: "#667eea" }}
+            />
+            <input
+              type="number"
+              min={1}
+              max={10}
+              step={0.1}
+              value={topic.interest}
+              onChange={(event) => updateInterest(topic.id, clampInterest(Number(event.target.value)))}
+              style={{
+                width: "80px",
+                padding: "6px 8px",
+                borderRadius: "8px",
+                border: "1px solid #e2e8f0",
+                fontSize: "0.9rem",
+                color: "#4a5568"
+              }}
+            />
+          </div>
 
           {/* Keywords */}
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
