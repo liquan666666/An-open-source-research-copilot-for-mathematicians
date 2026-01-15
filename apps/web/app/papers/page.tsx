@@ -27,6 +27,52 @@ export default function PapersPage() {
   const [arxivResults, setArxivResults] = useState<Paper[]>([]);
   const [showArxivSearch, setShowArxivSearch] = useState(false);
 
+  const escapePdfText = (text: string) =>
+    text.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+
+  const buildPdfBlob = (paper: Paper) => {
+    const lines = [
+      `论文标题: ${paper.title}`,
+      `作者: ${paper.authors}`,
+      `年份: ${paper.year}`,
+      `会议/期刊: ${paper.venue}`,
+      `引用次数: ${paper.citations}`,
+      "",
+      "摘要:",
+      paper.abstract,
+      "",
+      `标签: ${paper.tags.join(", ")}`
+    ];
+
+    const contentLines = lines.map((line) => `(${escapePdfText(line)}) Tj`).join(" T*\n");
+    const contentStream = `BT\n/F1 12 Tf\n72 720 Td\n14 TL\n${contentLines}\nET`;
+
+    const objects = [
+      "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+      "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+      "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>\nendobj\n",
+      `4 0 obj\n<< /Length ${contentStream.length} >>\nstream\n${contentStream}\nendstream\nendobj\n`,
+      "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
+    ];
+
+    let pdf = "%PDF-1.4\n";
+    const offsets = [0];
+    objects.forEach((obj) => {
+      offsets.push(pdf.length);
+      pdf += obj;
+    });
+
+    const xrefStart = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n`;
+    pdf += "0000000000 65535 f \n";
+    offsets.slice(1).forEach((offset) => {
+      pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+    });
+    pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`;
+
+    return new Blob([pdf], { type: "application/pdf" });
+  };
+
   // 从localStorage加载收藏状态
   useEffect(() => {
     const savedFavorites = localStorage.getItem('paperFavorites');
@@ -47,7 +93,7 @@ export default function PapersPage() {
       citations: 5234,
       abstract: "We present a proof of the Poincaré conjecture using Ricci flow with surgery on three-manifolds...",
       tags: ["Topology", "Differential Geometry", "Poincaré Conjecture"],
-      downloadUrl: "#",
+      downloadUrl: "https://arxiv.org/pdf/math/0303109.pdf",
       arxivId: "math/0303109"
     },
     {
@@ -424,23 +470,21 @@ export default function PapersPage() {
       link.click();
       document.body.removeChild(link);
     } else {
-      // 演示：创建一个带有论文信息的文本文件
-      downloadingToast.textContent = '📥 正在生成论文信息文件...';
+      downloadingToast.textContent = '📥 正在生成PDF摘要...';
       document.body.appendChild(downloadingToast);
 
-      const content = `论文标题: ${paper.title}\n作者: ${paper.authors}\n年份: ${paper.year}\n会议/期刊: ${paper.venue}\n引用次数: ${paper.citations}\n\n摘要:\n${paper.abstract}\n\n标签: ${paper.tags.join(', ')}`;
-      const blob = new Blob([content], { type: 'text/plain' });
+      const blob = buildPdfBlob(paper);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${paper.title.substring(0, 50).replace(/[^a-zA-Z0-9\s]/g, '_')}.txt`;
+      link.download = `${paper.title.substring(0, 50).replace(/[^a-zA-Z0-9\s]/g, '_')}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
       downloadingToast.style.background = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100())';
-      downloadingToast.textContent = '✅ 论文信息文件已下载';
+      downloadingToast.textContent = '✅ PDF已下载';
 
       setTimeout(() => {
         if (document.body.contains(downloadingToast)) {
@@ -809,6 +853,7 @@ export default function PapersPage() {
           <li>本地数据库包含20篇经典数学论文，覆盖拓扑学、代数几何、泛函分析等领域</li>
           <li>点击"🌐 arXiv搜索"按钮可搜索arXiv.org上的任意论文（支持直接下载PDF）</li>
           <li>arXiv论文带有特殊标记，点击下载会在新标签页打开PDF</li>
+          <li>如果未提供原文链接，系统会生成可下载的PDF摘要</li>
           <li>点击"收藏"按钮将重要文献加入个人文库，收藏状态会自动保存</li>
           <li>在"笔记"中记录阅读心得和重要观点，笔记会保存在浏览器本地</li>
           <li>使用搜索框可以同时搜索标题、作者和标签</li>
