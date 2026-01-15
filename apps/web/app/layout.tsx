@@ -11,7 +11,8 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <head>
-        <style>{`
+        <style dangerouslySetInnerHTML={{
+          __html: `
           * {
             margin: 0;
             padding: 0;
@@ -49,7 +50,7 @@ export default function RootLayout({
             margin: 0 auto;
             padding: 40px 20px;
           }
-        `}</style>
+        `}} />
       </head>
       <body>
         <div id="root-content">{children}</div>
