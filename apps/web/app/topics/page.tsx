@@ -196,24 +196,27 @@ export default function TopicsPage() {
           </div>
 
           {/* Action Button */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            style={{
-              marginTop: "20px",
-              padding: "12px 24px",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "10px",
-              fontSize: "0.95rem",
-              fontWeight: "600",
-              cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)"
-            }}
-          >
-            选择此课题并生成路线图 →
-          </motion.button>
+          <Link href="/roadmap" style={{ textDecoration: "none", display: "block" }}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                marginTop: "20px",
+                padding: "12px 24px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                fontSize: "0.95rem",
+                fontWeight: "600",
+                cursor: "pointer",
+                boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                width: "100%"
+              }}
+            >
+              选择此课题并生成路线图 →
+            </motion.button>
+          </Link>
         </motion.div>
       ))}
 
