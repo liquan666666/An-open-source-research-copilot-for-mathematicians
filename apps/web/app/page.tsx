@@ -2,8 +2,13 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useEffect } from "react";
+import { trackPageView } from "../lib/analytics";
 
 export default function Home() {
+  useEffect(() => {
+    trackPageView('/');
+  }, []);
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -91,6 +96,20 @@ export default function Home() {
       icon: "👤",
       color: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
       href: "/account",
+    },
+    {
+      title: "数据仪表板",
+      desc: "智能推荐和全面的使用分析",
+      icon: "📈",
+      color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      href: "/dashboard",
+    },
+    {
+      title: "帮助中心",
+      desc: "常见问题解答和使用指南",
+      icon: "📖",
+      color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      href: "/help",
     },
   ];
 
