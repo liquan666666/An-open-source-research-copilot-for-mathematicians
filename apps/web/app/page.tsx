@@ -85,6 +85,13 @@ export default function Home() {
       color: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
       href: "/pricing",
     },
+    {
+      title: "账户管理",
+      desc: "管理订阅、查看统计和导出数据",
+      icon: "👤",
+      color: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+      href: "/account",
+    },
   ];
 
   return (

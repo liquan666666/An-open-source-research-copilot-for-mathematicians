@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
+import Paywall from "../../components/Paywall";
 
 interface KnowledgePoint {
   id: number;
@@ -149,7 +150,8 @@ export default function PaperAssistantPage() {
   const sortedPoints = [...filteredPoints].sort((a, b) => b.relevance - a.relevance);
 
   return (
-    <div style={{ minHeight: "100vh", paddingBottom: "60px" }}>
+    <Paywall>
+      <div style={{ minHeight: "100vh", paddingBottom: "60px" }}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -593,5 +595,6 @@ export default function PaperAssistantPage() {
         </motion.div>
       )}
     </div>
+    </Paywall>
   );
 }
