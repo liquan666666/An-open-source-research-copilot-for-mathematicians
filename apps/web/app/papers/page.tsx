@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
+import Paywall from "../../components/Paywall";
 
 export default function PapersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,7 +57,8 @@ export default function PapersPage() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", paddingBottom: "60px" }}>
+    <Paywall>
+      <div style={{ minHeight: "100vh", paddingBottom: "60px" }}>
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -344,5 +346,6 @@ export default function PapersPage() {
         </ul>
       </motion.div>
     </div>
+    </Paywall>
   );
 }

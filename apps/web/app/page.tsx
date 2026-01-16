@@ -78,6 +78,13 @@ export default function Home() {
       color: "linear-gradient(135deg, #764ba2 0%, #667eea 100%)",
       href: "/checkin",
     },
+    {
+      title: "会员订阅",
+      desc: "查看订阅计划和管理您的会员",
+      icon: "💎",
+      color: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
+      href: "/pricing",
+    },
   ];
 
   return (

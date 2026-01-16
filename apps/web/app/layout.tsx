@@ -1,3 +1,5 @@
+import ClientLayout from '../components/ClientLayout';
+
 export const metadata = {
   title: 'MathResearchPilot - 数学研究助手',
   description: '面向数学研究者的开源研究执行系统：推荐课题、检索论文、生成可执行路线，并监督每日完成情况。',
@@ -48,11 +50,14 @@ export default function RootLayout({
             max-width: 1200px;
             margin: 0 auto;
             padding: 40px 20px;
+            padding-top: 80px;
           }
         `}</style>
       </head>
       <body>
-        <div id="root-content">{children}</div>
+        <ClientLayout>
+          <div id="root-content">{children}</div>
+        </ClientLayout>
       </body>
     </html>
   )
