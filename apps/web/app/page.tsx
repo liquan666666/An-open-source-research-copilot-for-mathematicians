@@ -30,9 +30,16 @@ export default function Home() {
 
   const cards = [
     {
+      title: "我的研究兴趣",
+      desc: "自定义和管理您的研究方向与兴趣",
+      icon: "🎯",
+      color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      href: "/interests",
+    },
+    {
       title: "课题推荐",
       desc: "根据研究方向/偏好推荐可做课题",
-      icon: "🎯",
+      icon: "💡",
       color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
       href: "/topics",
     },
@@ -61,7 +68,7 @@ export default function Home() {
       title: "今日任务",
       desc: "为今天分配任务并追踪",
       icon: "✅",
-      color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      color: "linear-gradient(135deg, #ffd89b 0%, #19547b 100%)",
       href: "/tasks",
     },
     {
@@ -159,7 +166,7 @@ export default function Home() {
             }}
           >
             <strong style={{ color: "#2d3748" }}>快速开始：</strong>
-            先访问「课题推荐」确定研究方向，使用「论文阅读助手」高效阅读文献并提取知识点，然后前往「路线图」生成详细的执行计划，最后通过「今日任务」和「打卡监督」追踪研究进度。
+            首先在「我的研究兴趣」中添加您的研究方向，然后访问「课题推荐」浏览推荐课题，使用「论文阅读助手」高效阅读文献并提取知识点，前往「路线图」生成详细的执行计划，最后通过「今日任务」和「打卡监督」追踪研究进度。
           </p>
         </div>
       </motion.div>
