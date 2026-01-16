@@ -17,7 +17,9 @@ export default function PapersPage() {
       citations: 89234,
       abstract: "Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks...",
       tags: ["Deep Learning", "Computer Vision", "ResNet"],
-      downloadUrl: "#"
+      downloadUrl: "https://arxiv.org/pdf/1512.03385.pdf",
+      arxivId: "1512.03385",
+      doi: "10.1109/CVPR.2016.90"
     },
     {
       id: 2,
@@ -28,7 +30,9 @@ export default function PapersPage() {
       citations: 76543,
       abstract: "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks...",
       tags: ["Transformer", "NLP", "Attention Mechanism"],
-      downloadUrl: "#"
+      downloadUrl: "https://arxiv.org/pdf/1706.03762.pdf",
+      arxivId: "1706.03762",
+      doi: "10.48550/arXiv.1706.03762"
     },
     {
       id: 3,
@@ -39,7 +43,9 @@ export default function PapersPage() {
       citations: 65432,
       abstract: "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations...",
       tags: ["BERT", "Pre-training", "NLP"],
-      downloadUrl: "#"
+      downloadUrl: "https://arxiv.org/pdf/1810.04805.pdf",
+      arxivId: "1810.04805",
+      doi: "10.18653/v1/N19-1423"
     }
   ];
 
@@ -207,27 +213,60 @@ export default function PapersPage() {
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: "12px" }}>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  padding: "10px 20px",
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)"
-                }}
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <a
+                href={paper.downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "none" }}
               >
-                📥 下载 PDF
-              </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    padding: "10px 20px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)"
+                  }}
+                >
+                  📥 下载 PDF
+                </motion.button>
+              </a>
+              {paper.arxivId && (
+                <a
+                  href={`https://arxiv.org/abs/${paper.arxivId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: "none" }}
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                      padding: "10px 20px",
+                      background: "white",
+                      color: "#667eea",
+                      border: "2px solid #667eea",
+                      borderRadius: "10px",
+                      fontSize: "0.9rem",
+                      fontWeight: "600",
+                      cursor: "pointer"
+                    }}
+                  >
+                    📄 arXiv
+                  </motion.button>
+                </a>
+              )}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => alert('收藏功能开发中，敬请期待！')}
                 style={{
                   padding: "10px 20px",
                   background: "white",
@@ -244,6 +283,7 @@ export default function PapersPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => alert('笔记功能开发中，敬请期待！')}
                 style={{
                   padding: "10px 20px",
                   background: "white",
@@ -296,10 +336,11 @@ export default function PapersPage() {
           💡 使用技巧
         </h4>
         <ul style={{ color: "#4a5568", lineHeight: "1.8", margin: 0, paddingLeft: "20px" }}>
-          <li>使用搜索框快速查找相关论文</li>
-          <li>点击"收藏"按钮将重要文献加入个人文库</li>
-          <li>在"笔记"中记录阅读心得和重要观点</li>
-          <li>引用次数可以帮助评估论文的影响力</li>
+          <li>点击"下载 PDF"按钮直接在新标签页打开论文PDF文件</li>
+          <li>点击"arXiv"按钮查看论文的详细信息和其他版本</li>
+          <li>使用搜索框快速查找相关论文标题、作者或关键词</li>
+          <li>引用次数可以帮助评估论文的影响力和重要性</li>
+          <li>收藏和笔记功能即将上线，敬请期待</li>
         </ul>
       </motion.div>
     </div>
