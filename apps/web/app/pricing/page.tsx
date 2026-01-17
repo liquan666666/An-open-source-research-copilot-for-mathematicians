@@ -3,11 +3,14 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getSubscriptionStatus, activateSubscription, getPlanName } from "../../lib/subscription";
+import { getSubscriptionStatus, getPlanName } from "../../lib/subscription";
+import { createCheckoutSession, getStripe } from "../../lib/stripe";
 
 export default function PricingPage() {
   const [currentPlan, setCurrentPlan] = useState("");
   const [daysRemaining, setDaysRemaining] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const status = getSubscriptionStatus();
@@ -15,14 +18,35 @@ export default function PricingPage() {
     setDaysRemaining(status.daysRemaining);
   }, []);
 
-  const handlePurchase = (plan: 'monthly' | 'yearly' | 'lifetime') => {
-    // 实际应用中，这里应该调用支付API
-    const confirmMessage = `确认购买${getPlanName(plan)}吗？\n\n注意：这是演示版本，实际不会扣费。点击确认后将激活${getPlanName(plan)}。`;
+  const handlePurchase = async (plan: 'monthly' | 'yearly' | 'lifetime') => {
+    setLoading(true);
+    setError("");
 
-    if (confirm(confirmMessage)) {
-      activateSubscription(plan);
-      alert(`🎉 恭喜！${getPlanName(plan)}已激活！\n\n现在您可以无限制使用所有功能了。`);
-      window.location.href = '/';
+    try {
+      // 创建 Stripe Checkout 会话
+      const session = await createCheckoutSession({
+        plan,
+        successUrl: `${window.location.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/pricing`,
+      });
+
+      // 重定向到 Stripe Checkout
+      const stripe = await getStripe();
+      if (!stripe) {
+        throw new Error("Stripe 初始化失败");
+      }
+
+      const { error: redirectError } = await stripe.redirectToCheckout({
+        sessionId: session.sessionId,
+      });
+
+      if (redirectError) {
+        throw redirectError;
+      }
+    } catch (err) {
+      console.error("Payment error:", err);
+      setError(err instanceof Error ? err.message : "支付失败，请稍后重试");
+      setLoading(false);
     }
   };
 
@@ -295,26 +319,26 @@ export default function PricingPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handlePurchase(plan.id as any)}
-              disabled={currentPlan === plan.id}
+              disabled={currentPlan === plan.id || loading}
               style={{
                 width: "100%",
                 padding: "16px",
-                background: currentPlan === plan.id
+                background: currentPlan === plan.id || loading
                   ? "#e9ecef"
                   : plan.color,
-                color: currentPlan === plan.id ? "#718096" : "white",
+                color: currentPlan === plan.id || loading ? "#718096" : "white",
                 border: "none",
                 borderRadius: "12px",
                 fontSize: "1rem",
                 fontWeight: "700",
-                cursor: currentPlan === plan.id ? "not-allowed" : "pointer",
-                boxShadow: currentPlan === plan.id
+                cursor: currentPlan === plan.id || loading ? "not-allowed" : "pointer",
+                boxShadow: currentPlan === plan.id || loading
                   ? "none"
                   : "0 4px 15px rgba(0, 0, 0, 0.2)",
-                opacity: currentPlan === plan.id ? 0.6 : 1
+                opacity: currentPlan === plan.id || loading ? 0.6 : 1
               }}
             >
-              {currentPlan === plan.id ? "✓ 当前计划" : "立即订阅"}
+              {currentPlan === plan.id ? "✓ 当前计划" : loading ? "处理中..." : "立即订阅"}
             </motion.button>
           </motion.div>
         ))}
@@ -355,7 +379,7 @@ export default function PricingPage() {
             },
             {
               q: "支持哪些支付方式？",
-              a: "我们支持微信支付、支付宝、银行卡等多种支付方式（演示版本暂未接入真实支付）。"
+              a: "我们通过 Stripe 支持国际信用卡、支付宝、微信支付等多种支付方式，安全便捷。"
             },
             {
               q: "终身会员真的是终身吗？",
@@ -409,11 +433,20 @@ export default function PricingPage() {
         }}
       >
         <div style={{ fontSize: "1rem", marginBottom: "12px" }}>
-          🔒 安全支付 · 🎁 7天无理由退款 · 📞 24/7技术支持
+          🔒 Stripe 安全支付 · 🎁 7天无理由退款 · 📞 24/7技术支持
         </div>
-        <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-          注意：这是演示版本，支付功能未接入真实支付接口
-        </div>
+        {error && (
+          <div style={{
+            marginTop: "12px",
+            padding: "12px",
+            background: "rgba(239, 68, 68, 0.1)",
+            color: "#dc2626",
+            borderRadius: "8px",
+            fontSize: "0.9rem"
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
       </motion.div>
     </div>
   );
