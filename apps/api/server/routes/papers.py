@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Query, HTTPException
 from typing import List, Optional
-import arxiv
 import httpx
 from datetime import datetime
+import xml.etree.ElementTree as ET
+import re
 
 router = APIRouter(prefix='/papers')
 
@@ -49,34 +50,93 @@ async def search_papers(
 
 
 async def search_arxiv(query: str, max_results: int) -> List[dict]:
-    """搜索 arXiv 论文"""
+    """搜索 arXiv 论文 - 使用 arXiv API"""
     try:
-        search = arxiv.Search(
-            query=query,
-            max_results=max_results,
-            sort_by=arxiv.SortCriterion.Relevance
-        )
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            # arXiv API endpoint - 使用 HTTPS 以提高稳定性
+            url = "https://arxiv.org/api/query"
+            params = {
+                "search_query": query,
+                "start": 0,
+                "max_results": max_results
+            }
 
-        papers = []
-        for result in search.results():
-            papers.append({
-                "id": result.entry_id.split('/')[-1],
-                "title": result.title,
-                "authors": ", ".join([author.name for author in result.authors]),
-                "year": result.published.year,
-                "venue": "arXiv",
-                "abstract": result.summary,
-                "tags": [cat for cat in result.categories],
-                "downloadUrl": result.pdf_url,
-                "arxivId": result.entry_id.split('/')[-1],
-                "doi": result.doi if hasattr(result, 'doi') else "",
-                "citations": 0,  # arXiv API 不提供引用数
-                "source": "arxiv",
-                "publishedDate": result.published.isoformat(),
-                "url": result.entry_id
-            })
+            response = await client.get(url, params=params, timeout=30.0)
 
-        return papers
+            # 如果主 API 失败,打印详细错误信息以便调试
+            if response.status_code != 200:
+                print(f"arXiv API 返回状态码 {response.status_code}")
+                print(f"响应内容: {response.text[:500]}")
+                return []
+
+            response.raise_for_status()
+
+            # 解析 XML 响应
+            root = ET.fromstring(response.content)
+
+            # 定义命名空间
+            namespaces = {
+                'atom': 'http://www.w3.org/2005/Atom',
+                'arxiv': 'http://arxiv.org/schemas/atom'
+            }
+
+            papers = []
+            for entry in root.findall('atom:entry', namespaces):
+                # 提取 arXiv ID
+                arxiv_id = entry.find('atom:id', namespaces).text.split('/')[-1]
+
+                # 提取标题
+                title = entry.find('atom:title', namespaces).text.strip().replace('\n', ' ')
+
+                # 提取作者
+                authors = []
+                for author in entry.findall('atom:author', namespaces):
+                    name = author.find('atom:name', namespaces)
+                    if name is not None:
+                        authors.append(name.text)
+                authors_str = ", ".join(authors)
+
+                # 提取发表日期
+                published = entry.find('atom:published', namespaces).text
+                year = int(published[:4])
+
+                # 提取摘要
+                summary = entry.find('atom:summary', namespaces)
+                abstract = summary.text.strip().replace('\n', ' ') if summary is not None else ""
+
+                # 提取分类标签
+                categories = []
+                for category in entry.findall('atom:category', namespaces):
+                    term = category.get('term')
+                    if term:
+                        categories.append(term)
+
+                # 提取 DOI (如果有)
+                doi_elem = entry.find('arxiv:doi', namespaces)
+                doi = doi_elem.text if doi_elem is not None else ""
+
+                # 构建 PDF URL
+                pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+                entry_url = f"https://arxiv.org/abs/{arxiv_id}"
+
+                papers.append({
+                    "id": arxiv_id,
+                    "title": title,
+                    "authors": authors_str,
+                    "year": year,
+                    "venue": "arXiv",
+                    "abstract": abstract,
+                    "tags": categories[:5],  # 最多5个标签
+                    "downloadUrl": pdf_url,
+                    "arxivId": arxiv_id,
+                    "doi": doi,
+                    "citations": 0,  # arXiv API 不提供引用数
+                    "source": "arxiv",
+                    "publishedDate": published,
+                    "url": entry_url
+                })
+
+            return papers
 
     except Exception as e:
         print(f"arXiv搜索错误: {e}")
