@@ -103,7 +103,7 @@ cp apps/web/.env.local.example apps/web/.env.local
 编辑 `apps/web/.env.local` 文件：
 ```bash
 # API 后端地址
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE=http://localhost:8000
 
 # Stripe 公钥
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxx  # 从 Stripe Dashboard 获取

@@ -40,19 +40,29 @@ export default function PapersPage() {
     setHasSearched(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
       const response = await fetch(
         `${apiUrl}/papers/search?query=${encodeURIComponent(searchQuery)}&source=${source}&max_results=20`
       );
 
       if (!response.ok) {
-        throw new Error("搜索失败，请稍后重试");
+        if (response.status === 500) {
+          throw new Error("服务器错误，请稍后重试");
+        } else if (response.status === 404) {
+          throw new Error("搜索服务不可用");
+        } else {
+          throw new Error("搜索失败，请稍后重试");
+        }
       }
 
       const data = await response.json();
       setPapers(data.papers || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "搜索出错");
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError("无法连接到后端服务，请确保 API 服务正在运行 (http://localhost:8000)");
+      } else {
+        setError(err instanceof Error ? err.message : "搜索出错");
+      }
       setPapers([]);
     } finally {
       setLoading(false);

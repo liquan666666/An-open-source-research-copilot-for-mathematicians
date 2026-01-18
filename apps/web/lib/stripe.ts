@@ -18,7 +18,7 @@ export interface CheckoutSessionData {
 }
 
 export const createCheckoutSession = async (data: CheckoutSessionData) => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
 
   try {
     const response = await fetch(`${apiUrl}/payments/create-checkout-session`, {
@@ -57,7 +57,7 @@ export const redirectToCheckout = async (sessionId: string) => {
 };
 
 export const verifyCheckoutSession = async (sessionId: string) => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
 
   try {
     const response = await fetch(`${apiUrl}/payments/session/${sessionId}`);
