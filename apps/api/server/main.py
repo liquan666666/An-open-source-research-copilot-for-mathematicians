@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from server.routes import auth, profile, topics, papers, roadmap, tasks, checkins, payments
+from server.routes import auth, profile, topics, papers, roadmap, tasks, checkins, payments, stats, export
 from server.db.init_db import init_db
 from server.settings import settings
 
@@ -44,3 +44,5 @@ app.include_router(roadmap.router)
 app.include_router(tasks.router)
 app.include_router(checkins.router)
 app.include_router(payments.router)
+app.include_router(stats.router)
+app.include_router(export.router)
