@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends, status
 from typing import List, Optional
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 import arxiv
 import httpx
 from datetime import datetime
 
-router = APIRouter(prefix='/papers')
+from server.db.models import SavedPaper, User
+from server.auth.dependencies import get_current_user, get_db, get_optional_user
+
+router = APIRouter(prefix='/papers', tags=["papers"])
 
 
 @router.get('/search')
@@ -155,10 +160,222 @@ async def search_crossref(query: str, max_results: int) -> List[dict]:
         return []
 
 
+# Pydantic models for saved papers
+class SavedPaperCreate(BaseModel):
+    paper_id: str = Field(..., min_length=1)
+    title: str
+    authors: Optional[str] = None
+    abstract: Optional[str] = None
+    source: str = Field(..., pattern="^(arxiv|crossref)$")
+    url: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class SavedPaperUpdate(BaseModel):
+    notes: Optional[str] = None
+
+
+class SavedPaperResponse(BaseModel):
+    id: int
+    user_id: int
+    paper_id: str
+    title: str
+    authors: Optional[str]
+    abstract: Optional[str]
+    source: str
+    url: Optional[str]
+    saved_at: datetime
+    notes: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+@router.get('/saved', response_model=List[SavedPaperResponse])
+async def get_saved_papers(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all saved papers for the current user.
+    """
+    papers = (
+        db.query(SavedPaper)
+        .filter(SavedPaper.user_id == current_user.id)
+        .order_by(SavedPaper.saved_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    return papers
+
+
+@router.post('/saved', response_model=SavedPaperResponse, status_code=status.HTTP_201_CREATED)
+async def save_paper(
+    paper_data: SavedPaperCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Save a paper to the user's collection.
+    """
+    # Check if paper is already saved
+    existing = (
+        db.query(SavedPaper)
+        .filter(
+            SavedPaper.user_id == current_user.id,
+            SavedPaper.paper_id == paper_data.paper_id
+        )
+        .first()
+    )
+
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Paper already saved"
+        )
+
+    new_paper = SavedPaper(
+        user_id=current_user.id,
+        paper_id=paper_data.paper_id,
+        title=paper_data.title,
+        authors=paper_data.authors,
+        abstract=paper_data.abstract,
+        source=paper_data.source,
+        url=paper_data.url,
+        notes=paper_data.notes
+    )
+
+    db.add(new_paper)
+    db.commit()
+    db.refresh(new_paper)
+
+    return new_paper
+
+
+@router.get('/saved/{paper_id}', response_model=SavedPaperResponse)
+async def get_saved_paper(
+    paper_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific saved paper.
+    """
+    paper = (
+        db.query(SavedPaper)
+        .filter(
+            SavedPaper.id == paper_id,
+            SavedPaper.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not paper:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Saved paper not found"
+        )
+
+    return paper
+
+
+@router.put('/saved/{paper_id}/notes', response_model=SavedPaperResponse)
+async def update_paper_notes(
+    paper_id: int,
+    notes_data: SavedPaperUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update notes for a saved paper.
+    """
+    paper = (
+        db.query(SavedPaper)
+        .filter(
+            SavedPaper.id == paper_id,
+            SavedPaper.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not paper:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Saved paper not found"
+        )
+
+    paper.notes = notes_data.notes
+    db.commit()
+    db.refresh(paper)
+
+    return paper
+
+
+@router.delete('/saved/{paper_id}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_saved_paper(
+    paper_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Remove a paper from saved collection.
+    """
+    paper = (
+        db.query(SavedPaper)
+        .filter(
+            SavedPaper.id == paper_id,
+            SavedPaper.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not paper:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Saved paper not found"
+        )
+
+    db.delete(paper)
+    db.commit()
+
+    return None
+
+
+@router.get('/saved/check/{source_paper_id}')
+async def check_if_saved(
+    source_paper_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Check if a paper is saved by the current user.
+
+    Returns: {"is_saved": boolean, "saved_paper_id": int or null}
+    """
+    saved_paper = (
+        db.query(SavedPaper)
+        .filter(
+            SavedPaper.user_id == current_user.id,
+            SavedPaper.paper_id == source_paper_id
+        )
+        .first()
+    )
+
+    return {
+        "is_saved": saved_paper is not None,
+        "saved_paper_id": saved_paper.id if saved_paper else None
+    }
+
+
+# Legacy endpoint
 @router.get('/')
 def lib():
-    """获取论文列表（已弃用，使用 /search 替代）"""
+    """获取论文列表（已弃用，使用 /search 或 /saved 替代）"""
     return {
-        "message": "请使用 /papers/search 端点进行论文搜索",
+        "message": "请使用 /papers/search 端点进行论文搜索，或使用 /papers/saved 获取收藏的论文",
         "deprecated": True
     }
