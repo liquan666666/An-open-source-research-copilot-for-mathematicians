@@ -48,6 +48,11 @@ class UserResponse(BaseModel):
     subscription_plan: str
     subscription_status: str
 
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
+
     class Config:
         from_attributes = True
 
@@ -237,8 +242,7 @@ async def logout(current_user: User = Depends(get_current_user)):
 
 @router.put("/change-password")
 async def change_password(
-    current_password: str = Field(..., min_length=1),
-    new_password: str = Field(..., min_length=8),
+    password_data: PasswordChange,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -246,14 +250,14 @@ async def change_password(
     Change the current user's password.
     """
     # Verify current password
-    if not verify_password(current_password, current_user.password_hash):
+    if not verify_password(password_data.current_password, current_user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect current password"
         )
 
     # Update password
-    current_user.password_hash = hash_password(new_password)
+    current_user.password_hash = hash_password(password_data.new_password)
     current_user.updated_at = datetime.utcnow()
 
     db.commit()
