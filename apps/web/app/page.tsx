@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect } from "react";
 import { trackPageView } from "../lib/analytics";
+import SmartRecommendations from "../components/SmartRecommendations";
 
 export default function Home() {
   useEffect(() => {
@@ -155,6 +156,9 @@ export default function Home() {
           推荐课题 · 检索论文 · 生成路线 · 监督完成
         </p>
       </motion.div>
+
+      {/* Smart Recommendations */}
+      <SmartRecommendations />
 
       <motion.div
         variants={containerVariants}
