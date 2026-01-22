@@ -1,6 +1,6 @@
 """Statistics and analytics routes."""
 from datetime import datetime, date, timedelta
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -53,8 +53,8 @@ class LearningProgress(BaseModel):
     total_study_hours: float
     papers_read: int
     tasks_completed: int
-    knowledge_areas: List[Dict[str, any]]
-    recent_activity: List[Dict[str, any]]
+    knowledge_areas: List[Dict[str, Any]]
+    recent_activity: List[Dict[str, Any]]
 
 
 @router.get("/overview", response_model=OverviewStats)
