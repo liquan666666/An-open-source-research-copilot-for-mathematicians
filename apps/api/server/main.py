@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from server.routes import profile, topics, papers, roadmap, tasks, checkins
+from server.routes import profile, topics, papers, roadmap, tasks, checkins, auth
 from server.db.init_db import init_db
 from server.settings import settings
 
@@ -17,6 +17,7 @@ app.add_middleware(
 def startup():
     init_db(settings.db_path)
 
+app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(topics.router)
 app.include_router(papers.router)
