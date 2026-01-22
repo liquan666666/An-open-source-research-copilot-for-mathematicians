@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Paywall from "../../components/Paywall";
+import PaperPageInsights from "../../components/PaperPageInsights";
 
 interface Paper {
   id: string;
@@ -231,6 +232,9 @@ export default function PapersPage() {
             </div>
           )}
         </motion.div>
+
+        {/* Smart Insights */}
+        <PaperPageInsights />
 
         {/* Loading State */}
         {loading && (

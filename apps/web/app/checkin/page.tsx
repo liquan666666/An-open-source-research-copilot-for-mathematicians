@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
+import CheckinMotivation from "../../components/CheckinMotivation";
 
 interface CheckIn {
   date: string;
@@ -102,6 +103,9 @@ export default function CheckInPage() {
           记录每日进展，养成良好的研究习惯
         </p>
       </motion.div>
+
+      {/* Motivation Card */}
+      <CheckinMotivation />
 
       {/* Stats Cards */}
       <div style={{
