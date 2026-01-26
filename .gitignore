@@ -27,3 +27,6 @@ venv/
 .idea/
 
 
+
+# Database
+data/

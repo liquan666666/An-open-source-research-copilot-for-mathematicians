@@ -8,7 +8,15 @@ services:
       - mrp_db:/app/data
     environment:
       - MRP_DB_PATH=/app/data/mrp.sqlite
-      - CORS_ORIGINS=http://localhost:3000
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - mrp_network
 
   web:
     image: node:20-alpine
@@ -20,6 +28,17 @@ services:
       - ./apps/web:/app
     environment:
       - NEXT_PUBLIC_API_BASE=http://localhost:8000
+      - NEXT_TELEMETRY_DISABLED=1
+      - WATCHPACK_POLLING=true
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - mrp_network
 
 volumes:
   mrp_db:
+
+networks:
+  mrp_network:
+    driver: bridge
